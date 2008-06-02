@@ -86,9 +86,9 @@ trace (" vetex " + c + " uv " + tc + ": " + uvs [tc].u + ", " + uvs [tc].v)
 				mesh.setVertex (b, 0, 1, 0);
 				mesh.setVertex (c, 0, 0, 1);
 
-				mesh.setUVCoords (a, uvs [ta].u, uvs [ta].v);
-				mesh.setUVCoords (b, uvs [tb].u, uvs [tb].v);
-				mesh.setUVCoords (c, uvs [tc].u, uvs [tc].v);
+				mesh.setUVCoords (a, uvs [ta].u, 1-uvs [ta].v);
+				mesh.setUVCoords (b, uvs [tb].u, 1-uvs [tb].v);
+				mesh.setUVCoords (c, uvs [tc].u, 1-uvs [tc].v);
 
 				mesh.setFaceVertexIds (i, a, b, c);
 				mesh.setFaceUVCoordsIds (i, a, b, c);
@@ -121,14 +121,14 @@ trace (" vetex " + c + " uv " + tc + ": " + uvs [tc].u + ", " + uvs [tc].v)
 				vertices [i] = vi;
 				for (j = 0; j < num_vertices; j++)
 				{
-					var v:Vector = new Vector ();
+					var vec:Vector = new Vector ();
 
 					// order of assignment is important here because of data reads...
-					v.x = ((sx * data.readUnsignedByte()) + tx) * scaling;
-					v.z = ((sy * data.readUnsignedByte()) + ty) * scaling;
-					v.y = ((sz * data.readUnsignedByte()) + tz) * scaling;
+					vec.x = ((sx * data.readUnsignedByte()) + tx) * scaling;
+					vec.z = ((sy * data.readUnsignedByte()) + ty) * scaling;
+					vec.y = ((sz * data.readUnsignedByte()) + tz) * scaling;
 
-					vi [j] = v;
+					vi [j] = vec;
 
 					// ignore "vertex normal index"
 					data.readUnsignedByte ();
@@ -180,14 +180,19 @@ trace (" vetex " + _a + " uv " + _ta + ": " + mesh.aUVCoords [_ta].u + ", " + me
 				var v2:Vector = Vector (f2 [i]);
 
 				// interpolate
-				v0.x = v1.x * c1 + v2.x * c2;
-				v0.y = v1.y * c1 + v2.y * c2;
-				v0.z = v1.z * c1 + v2.z * c2;
+				v0.x = v1.x * c1 + v2.x * c2; v0.wx = v0.x;
+				v0.y = v1.y * c1 + v2.y * c2; v0.wy = v0.y;
+				v0.z = v1.z * c1 + v2.z * c2; v0.wz = v0.z;
 			}
 
-			// update internal stuff - do we need this ?
-			geometry.aFacesNormals.length = 0;
-			geometry.generateFaceNormals ();
+			// update face normals
+			for each (var l_oPoly:Polygon in aPolygons)
+			{
+				v.x = l_oPoly.b.x - l_oPoly.a.x; v.y = l_oPoly.b.y - l_oPoly.a.y; v.z = l_oPoly.b.z - l_oPoly.a.z;
+				w.x = l_oPoly.b.x - l_oPoly.c.x; w.y = l_oPoly.b.y - l_oPoly.c.y; w.z = l_oPoly.b.z - l_oPoly.c.z;
+				w.crossWith (v); w.normalize ();
+				l_oPoly.normal.x = w.x; l_oPoly.normal.y = w.y; l_oPoly.normal.z = w.z;
+			}
 		}
 
 		// animation "time" (frame number)
@@ -195,6 +200,9 @@ trace (" vetex " + _a + " uv " + _ta + ": " + mesh.aUVCoords [_ta].u + ", " + me
 
 		// vertices list for every frame
 		private var vertices:Array = [];
+
+		// vars for quick normal computation
+		private var v:Vector = new Vector (), w:Vector = new Vector ();
 
 		// original Philippe vars
 		private var ident:int;
@@ -214,7 +222,7 @@ trace (" vetex " + _a + " uv " + _ta + ": " + mesh.aUVCoords [_ta].u + ", " + me
 		private var offset_frames:int;
 		private var offset_glcmds:int;
 		private var offset_end:int;
-		private var scaling:Number = 2;
+		private var scaling:Number = 1;
 
 	}
 }
