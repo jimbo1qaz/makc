@@ -17,10 +17,14 @@ package sandy.primitive
 	{
 		/**
 		* Creates MD2 primitive.
+		*
+		* @param p_sName Shape instance name.
+		* @param data MD2 binary data.
+		* @param scale Adjusts model scale.
 		*/
-		public function MD2 ( p_sName:String, data:ByteArray )
+		public function MD2 ( p_sName:String, data:ByteArray, scale:Number = 1 )
 		{
-			super (p_sName); geometry = generate (data); frame = 0;
+			super (p_sName); scaling = scale; geometry = generate (data); frame = 0;
 		}
 
 		/**
@@ -64,11 +68,11 @@ package sandy.primitive
 			// UV coordinates
 			data.position = offset_st;
 			for (i = 0; i < num_st; i++)
-				uvs.push (new UVCoord (data.readShort() / skinwidth, 1 - ( data.readShort() / skinheight) ));
+				uvs.push (new UVCoord (data.readShort() / skinwidth, data.readShort() / skinheight ));
 
 			// Faces
 			data.position = offset_tris;
-			for (i = 0; i < num_tris; i++)
+			for (i = 0, j = 0; i < num_tris; i++, j+=3)
 			{
 				var a:int = data.readUnsignedShort();
 				var b:int = data.readUnsignedShort();
@@ -76,22 +80,18 @@ package sandy.primitive
 				var ta:int = data.readUnsignedShort();
 				var tb:int = data.readUnsignedShort();
 				var tc:int = data.readUnsignedShort();
-trace ("face " + i)
-trace (" vetex " + a + " uv " + ta + ": " + uvs [ta].u + ", " + uvs [ta].v)
-trace (" vetex " + b + " uv " + tb + ": " + uvs [tb].u + ", " + uvs [tb].v)
-trace (" vetex " + c + " uv " + tc + ": " + uvs [tc].u + ", " + uvs [tc].v)
 
 				// create placeholder vertices (actual coordinates are set later)
 				mesh.setVertex (a, 1, 0, 0);
 				mesh.setVertex (b, 0, 1, 0);
 				mesh.setVertex (c, 0, 0, 1);
 
-				mesh.setUVCoords (a, uvs [ta].u, 1-uvs [ta].v);
-				mesh.setUVCoords (b, uvs [tb].u, 1-uvs [tb].v);
-				mesh.setUVCoords (c, uvs [tc].u, 1-uvs [tc].v);
+				mesh.setUVCoords (j, uvs [ta].u, uvs [ta].v);
+				mesh.setUVCoords (j + 1, uvs [tb].u, uvs [tb].v);
+				mesh.setUVCoords (j + 2, uvs [tc].u, uvs [tc].v);
 
 				mesh.setFaceVertexIds (i, a, b, c);
-				mesh.setFaceUVCoordsIds (i, a, b, c);
+				mesh.setFaceUVCoordsIds (i, j, j + 1, j + 2);
 			}
 
 			// Frame animation data
@@ -134,16 +134,6 @@ trace (" vetex " + c + " uv " + tc + ": " + uvs [tc].u + ", " + uvs [tc].v)
 					data.readUnsignedByte ();
 				}
 			}
-trace ("check:");
-for (i=0; i<mesh.aFacesVertexID.length; i++){
-trace ("face " + i);
-for (j = 0; j< 3; j++) {
-var _a = mesh.aFacesVertexID[i][j];
-var _ta = mesh.aFacesUVCoordsID[i][j]; // this should not coincide, it is == _a
-trace (" vetex " + _a + " uv " + _ta + ": " + mesh.aUVCoords [_ta].u + ", " + mesh.aUVCoords [_ta].v)
-}
-}
-
 
 			return mesh;
 		}
@@ -222,7 +212,6 @@ trace (" vetex " + _a + " uv " + _ta + ": " + mesh.aUVCoords [_ta].u + ", " + me
 		private var offset_frames:int;
 		private var offset_glcmds:int;
 		private var offset_end:int;
-		private var scaling:Number = 1;
-
+		private var scaling:Number;
 	}
 }
