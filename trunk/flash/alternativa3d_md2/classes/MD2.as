@@ -86,12 +86,25 @@ package
 				var tb:int = data.readUnsignedShort();
 				var tc:int = data.readUnsignedShort();
 
+				var u0:Number = uvs [ta].u, v0:Number = uvs[ta].v;
+				var u1:Number = uvs [tc].u, v1:Number = uvs[tc].v;
+				var u2:Number = uvs [tb].u, v2:Number = uvs[tb].v;
+
+				// we fix perpendicular projections here because the engine does not attempt to do so
+				if( (u0 == u1 && v0 == v1) || (u0 == u2 && v0 == v2) )
+				{
+					u0 -= (u0 > 0.005)? 0.005 : -0.005;
+					v0 -= (v0 > 0.007)? 0.007 : -0.007;
+				}
+				if( u2 == u1 && v2 == v1 )
+				{
+					u2 -= (u2 > 0.005)? 0.004 : -0.004;
+					v2 -= (v2 > 0.006)? 0.006 : -0.006;
+				}
+
+
 				_faces.push (addFace ([a, c, b], i));
-				setUVsToFace(
-					new Point(uvs [ta].u, uvs [ta].v),
-					new Point(uvs [tc].u, uvs [tc].v),
-					new Point(uvs [tb].u, uvs [tb].v),
-				i);
+				setUVsToFace(new Point(/* a */ u0, v0), new Point(/* b */ u1, v1), new Point(/* c */ u2, v2), i);
 			}
 
 			// Default material (wireframe)
