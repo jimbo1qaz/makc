@@ -68,7 +68,7 @@ package
 
 			// Make vertices placeholders
 			for (i = 0; i < num_vertices; i++)
-				addVertex (0, 0, 0, i);
+				createVertex (0, 0, 0, i);
 
 			// UV coordinates
 			data.position = offset_st;
@@ -103,12 +103,12 @@ package
 				}
 
 
-				_faces.push (addFace ([a, c, b], i));
+				_faces.push (createFace ([a, c, b], i));
 				setUVsToFace(new Point(/* a */ u0, v0), new Point(/* b */ u1, v1), new Point(/* c */ u2, v2), i);
 			}
 
 			// Default material (wireframe)
-			addSurface(_faces, "md2"); setMaterialToSurface(new WireMaterial(1, 0xFF0000), "md2");
+			createSurface(_faces, "md2"); setMaterialToSurface(new WireMaterial(1, 0xFF0000), "md2");
 
 			// Frame animation data
 			for (i = 0; i < num_frames; i++)
