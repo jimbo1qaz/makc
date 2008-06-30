@@ -41,9 +41,10 @@
 		/**
 		 * Fired when stage reference is accessible.
 		 */
-		private function onStage (event:Event):void
-		{
+		private function onStage (event:Event):void {
 			removeEventListener (Event.ADDED_TO_STAGE, onStage);
+
+			addChild (new Logo);
 
 			// set up movie stage
 			stage.quality = StageQuality.LOW;
