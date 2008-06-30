@@ -4,6 +4,7 @@
 	import alternativa.engine3d.core.Mesh;
 	import alternativa.engine3d.core.Object3D;
 	import alternativa.engine3d.core.Scene3D;
+	import alternativa.engine3d.core.Surface;
 	import alternativa.engine3d.display.View;
 	import alternativa.engine3d.materials.*//TextureMaterial;
 	import alternativa.types.Point3D;
@@ -19,17 +20,26 @@
 
 	import com.suite75.quake1.io.*;
 
+	/**
+	 * Main (document) class.
+	 * Large portions of its code were emm borrowed from QuakeEngine by Tim Knip.
+	 */
 	[SWF(backgroundColor="#000000", frameRate="100")]
 	public class Main extends Sprite {
 
+		private var logo:Logo;
 		private var scene:Scene3D;
 		private var view:View;
 		private var camera:Camera3D;
 		private var wasd:CameraController;
 
 		private var reader:BspReader;
+		private var curLeaf:int;
+		private var normal:Point3D = new Point3D;
 
 		private var linearNodeMap:Array = [];
+		private var faceMeshesMap:Array = [];
+		private var faceTexturesMap:Array = [];
 
 		/**
 		 * Constructor.
@@ -44,7 +54,8 @@
 		private function onStage (event:Event):void {
 			removeEventListener (Event.ADDED_TO_STAGE, onStage);
 
-			addChild (new Logo);
+			// show something while stuff loads
+			logo = new Logo; addChild (logo);
 
 			// set up movie stage
 			stage.quality = StageQuality.LOW;
@@ -52,11 +63,11 @@
 			stage.align = StageAlign.TOP_LEFT;
 
 			// set up scene, camera and all the boring stuff
-			scene = new Scene3D(); scene.root = new Object3D(); //scene.root.addChild(flag);
+			scene = new Scene3D(); scene.root = new Object3D();
 			camera = new Camera3D(); camera.x = 150; camera.y = 150; camera.z = 150; scene.root.addChild(camera);
 			view = new View(); addChild(view); view.camera = camera;
 
-			wasd = new CameraController(stage); wasd.camera = camera; wasd.speed = 300; //wasd.lookAt(flag.coords);
+			wasd = new CameraController(stage); wasd.camera = camera; wasd.speed = 300;
 			wasd.setDefaultBindings(); wasd.controlsEnabled = true;
 			wasd.checkCollisions = true; wasd.collisionRadius = 20;
 			
@@ -65,13 +76,6 @@
 			stage.addEventListener(Event.RESIZE, onResize);
 			stage.addEventListener(Event.ENTER_FRAME, onRenderTick);
 			onResize(null);
-
-/*			// add debug textbox
-			debug_text = new TextField; debug_text.textColor = 0xFFFFFF; debug_text.width = stage.stageWidth; addChild (debug_text);
-			debug_text.height = stage.stageHeight;
-
-			// add debug sprite
-			debug_tree = new Sprite; addChild (debug_tree);*/
 
 			// load level
 			reader = new BspReader();
@@ -126,7 +130,7 @@
 					depth ++;
 					if (depth == linearNodeMap.length) {
 						// no more nodes left in the tree - we're done
-						removeEventListener (Event.ENTER_FRAME, buildBSPNodes); return;
+						logo.visible = false; removeEventListener (Event.ENTER_FRAME, buildBSPNodes); return;
 					}
 				}
 
@@ -143,6 +147,9 @@
 					face = reader.faces [BspModel(reader.models [0]).firstface + node.firstface + i];
 
 					mesh = createNodeFace (face, node);
+
+					faceMeshesMap [node.firstface + i] = mesh;
+					faceTexturesMap [node.firstface + i] = Surface (mesh.surfaces.peek ()).material;
 
 					mesh.mobility = depth; scene.root.addChild (mesh);
 				}
@@ -198,6 +205,7 @@
 						p = tris [i][j]; k = 100 *i +j;
 						mesh.createVertex (p[0], p[1], p[2], k); mVertices.push (k);
 					}
+
 					mFaces.push (mesh.createFace (mVertices, i));
 					mesh.setUVsToFace (
 						new Point (tris[i][2][3], tris[i][2][4]),
@@ -205,20 +213,18 @@
 						new Point (tris[i][0][3], tris[i][0][4]), i);
 				}
 			}
-			var bmp:BitmapData = BspTexture(reader.textures [tex.miptex]).bitmap;
-			if (face.lightmap_offset >= 0)
-				bmp = reader.buildLightMap(face, bmp);
-
 			mesh.createSurface (mFaces);
-			mesh.setMaterialToAllSurfaces (new /*FillMaterial (Math.round (0xFFFFFF * Math.random()))*/
-				TextureMaterial (new Texture (bmp)));
+
+			// create and apply material
+			var bmp:BitmapData = BspTexture(reader.textures [tex.miptex]).bitmap;
+			if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
+			mesh.setMaterialToAllSurfaces (new TextureMaterial (new Texture (bmp)));
 
 			return mesh;
 		}
 
 		/**
 		 * Triangulates convex polygon.
-		 * @author Tim Knip :)
 		 */
 		private function triangulate(points:Array):Array
 		{
@@ -241,7 +247,89 @@
 		 * Processes user input and renders the scene.
 		 */
 		private function onRenderTick(e:Event):void {
-			wasd.processInput(); scene.calculate();
+			// move
+			wasd.processInput();
+			// show visible leaves only - does not work at the moment
+/*
+			var idx:int = findLeaf (camera.coords);
+			if (idx != curLeaf && idx) {
+				curLeaf = idx; showVisibleLeaves (curLeaf);
+			}
+*/
+			// render
+			scene.calculate();
+		}
+
+		/**
+		 * Finds the leaf containing the the player.
+		 * 
+		 * @param	playerPosition
+		 * 
+		 * @return	Index into the leaves array.
+		 */
+		private function findLeaf(playerPosition:Point3D):int
+		{
+			var idx:int = BspModel (reader.models[0]).headnode[0];
+			while (idx >= 0) {
+				var node:BspNode = reader.nodes[idx] as BspNode;
+				var plane:BspPlane = reader.planes[node.planenum];	
+				normal.x = plane.a; normal.y = plane.b; normal.z = plane.c;
+				var dot:Number = Point3D.dot (normal, playerPosition) - plane.d;
+				idx = (dot >= 0) ? node.children[0] : node.children[1];
+			}
+			return -(idx+1);
+		}
+
+		/**
+		 * Renders a leaf, and all leaves that are visible 
+		 * from that leaf. Uses Quake's Possible Visible Set (PVS).
+		 * @see com.suite75.quake1.io.BspReader#visibility
+		 * 
+		 * @param	leafIndex
+		 */
+		private function showVisibleLeaves(leafIndex:int):void
+		{
+			var leaf:BspLeaf = reader.leaves[leafIndex];
+			var numleafs:int = reader.leaves.length;
+			var visisz:Array = reader.visibility;
+			var v:int = leaf.visofs;
+			var i:int, j:int, bit:int, faceIndex:int;
+			var mesh:Mesh;
+
+			// 1st, hide everything
+			for each (mesh in faceMeshesMap)
+				mesh.setMaterialToAllSurfaces (null);
+
+			// adjust player z (probably to match PVS)
+			var playerZ:Number = leaf.mins[2] + 60; camera.z = playerZ;
+			
+			for(i = 1; i < numleafs; v++)
+			{
+				if(visisz[v] == 0)
+				{
+					// value 0, leaves invisible: skip some leaves
+					i += 8 * visisz[v + 1];    	
+					v++;
+				}
+				else
+				{
+					// tag 8 leaves if needed, examine bits right to left
+					for(bit = 1; bit < 0xff && i < numleafs; bit = bit * 2, i++)
+					{
+						if(visisz[v] & bit)
+						{
+							// unhide all faces in i-th leaf
+							leaf = BspLeaf (reader.leaves[i]);
+							for (j = 0; j < leaf.nummarksurfaces; j++ ) {
+								faceIndex = reader.marksurfaces[leaf.firstmarksurface + i];
+								mesh = faceMeshesMap [faceIndex];
+								if (mesh)
+									mesh.setMaterialToAllSurfaces (faceTexturesMap [faceIndex]);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
