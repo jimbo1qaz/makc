@@ -19,7 +19,7 @@
 
 	import com.suite75.quake1.io.*;
 
-	[SWF(backgroundColor="#004000", frameRate="100")]
+	[SWF(backgroundColor="#000000", frameRate="100")]
 	public class Main extends Sprite {
 
 		private var scene:Scene3D;
@@ -204,10 +204,13 @@
 						new Point (tris[i][0][3], tris[i][0][4]), i);
 				}
 			}
+			var bmp:BitmapData = BspTexture(reader.textures [tex.miptex]).bitmap;
+			if (face.lightmap_offset >= 0)
+				bmp = reader.buildLightMap(face, bmp);
 
 			mesh.createSurface (mFaces);
 			mesh.setMaterialToAllSurfaces (new /*FillMaterial (Math.round (0xFFFFFF * Math.random()))*/
-				TextureMaterial (new Texture (BspTexture(this.reader.textures [tex.miptex]).bitmap)));
+				TextureMaterial (new Texture (bmp)));
 
 			return mesh;
 		}
