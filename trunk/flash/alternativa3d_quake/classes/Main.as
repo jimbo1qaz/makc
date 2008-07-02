@@ -254,15 +254,22 @@
 		private function onRenderTick(e:Event):void {
 			// move
 			wasd.processInput ();
-			// show visible leaves only - does not work at the moment
-/*
+			// show visible leaves only
+			hideInvisibleStuff ();
+			// render
+			scene.calculate ();
+		}
+
+		/**
+		 * Hides everything but visible leaves.
+		 */
+		private function hideInvisibleStuff ():void {
+			if (!reader.models)
+				return;
 			var idx:int = findLeaf (camera.coords);
 			if (idx != curLeaf && idx) {
 				curLeaf = idx; showVisibleLeaves (curLeaf);
 			}
-*/
-			// render
-			scene.calculate ();
 		}
 
 		/**
@@ -304,10 +311,12 @@
 			// 1st, hide everything
 			for each (mesh in faceMeshesMap)
 				mesh.setMaterialToAllSurfaces (null);
+//trace (faceMeshesMap.length + " meshes hidden");
 
 			// adjust player z (probably to match PVS)
-			var playerZ:Number = leaf.mins[2] + 60; camera.z = playerZ;
-			
+			//var playerZ:Number = leaf.mins[2] + 60; camera.z = playerZ;
+
+//var c:int = 0;
 			for(i = 1; i < numleafs; v++)
 			{
 				if(visisz[v] == 0)
@@ -326,15 +335,18 @@
 							// unhide all faces in i-th leaf
 							leaf = BspLeaf (reader.leaves[i]);
 							for (j = 0; j < leaf.nummarksurfaces; j++ ) {
-								faceIndex = reader.marksurfaces[leaf.firstmarksurface + i];
+								faceIndex = reader.marksurfaces[leaf.firstmarksurface + j];
 								mesh = faceMeshesMap [faceIndex];
-								if (mesh)
+								if (mesh) {
 									mesh.setMaterialToAllSurfaces (faceTexturesMap [faceIndex]);
+//c++;
+								}
 							}
 						}
 					}
 				}
 			}
+//trace (c + " meshes shown");
 		}
 	}
 }
