@@ -1,6 +1,7 @@
 ﻿package {
 	import alternativa.engine3d.controllers.CameraController;
 	import alternativa.engine3d.core.Camera3D;
+	import alternativa.engine3d.core.Face;
 	import alternativa.engine3d.core.Mesh;
 	import alternativa.engine3d.core.Object3D;
 	import alternativa.engine3d.core.Scene3D;
@@ -40,6 +41,7 @@
 		private var linearNodeMap:Array = [];
 		private var faceMeshesMap:Array = [];
 		private var faceTexturesMap:Array = [];
+		private var lavaFaceMeshes:Array = [];
 
 		/**
 		 * Constructor.
@@ -160,13 +162,15 @@
 		 * Creates geometry for single face in a node.
 		 */
 		private function createNodeFace (face:BspFace, node:BspNode):Mesh {
-			var i:int, j:int, k:int, p:Array, q:Array;
+			var i:int, j:int, k:int, m:int, p:Array, q:Array;
 			var u:Point3D, v:Point3D, w:Point3D = new Point3D;
 
 			// fetch texture information
-			var tex:BspTexInfo = this.reader.tex_info[face.texture_info];
-			u = new Point3D (tex.u_axis[0], tex.u_axis[1], tex.u_axis[2]);
-			v = new Point3D (tex.v_axis[0], tex.v_axis[1], tex.v_axis[2]);
+			var texInfo:BspTexInfo = this.reader.tex_info[face.texture_info];
+			var texture:BspTexture = BspTexture(reader.textures [texInfo.miptex]);
+
+			u = new Point3D (texInfo.u_axis[0], texInfo.u_axis[1], texInfo.u_axis[2]);
+			v = new Point3D (texInfo.v_axis[0], texInfo.v_axis[1], texInfo.v_axis[2]);
 
 			// reconstruct a polygon
 			var poly:Array = [], vertex:Array;
@@ -179,8 +183,8 @@
 				vertex = (reader.vertices [idx] as Array).slice();
 
 				w.x = vertex[0]; w.y = vertex[1]; w.z = vertex[2];
-				vertex[3] = ( Point3D.dot(w, u) + tex.u_offset - face.texturemins[0] ) / face.extents[0];
-				vertex[4] = ( Point3D.dot(w, v) + tex.v_offset - face.texturemins[1] ) / face.extents[1];
+				vertex[3] =  ( Point3D.dot(w, u) + texInfo.u_offset ) / texture.width;
+				vertex[4] = -( Point3D.dot(w, v) + texInfo.v_offset ) / texture.height;
 
 				poly.push (vertex);
 			}
@@ -190,7 +194,7 @@
 
 			// add each triangle
 			var mesh:Mesh = new Mesh, mFaces:Array = [], mVertices:Array;
-			for (i = 0; i < tris.length; i++) {
+			for (i = 0, m = 0; i < tris.length; i++) {
 
 				// filter very thin triangles out
 				// these may come from bad map or bad parser - it's hard to tell
@@ -206,19 +210,25 @@
 						mesh.createVertex (p[0], p[1], p[2], k); mVertices.push (k);
 					}
 
-					mFaces.push (mesh.createFace (mVertices, i));
+					mFaces.push (mesh.createFace (mVertices, m));
 					mesh.setUVsToFace (
 						new Point (tris[i][2][3], tris[i][2][4]),
 						new Point (tris[i][1][3], tris[i][1][4]),
-						new Point (tris[i][0][3], tris[i][0][4]), i);
+						new Point (tris[i][0][3], tris[i][0][4]), m);
+
+					m++;
 				}
 			}
 			mesh.createSurface (mFaces);
 
 			// create and apply material
-			var bmp:BitmapData = BspTexture(reader.textures [tex.miptex]).bitmap;
-			if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
-			mesh.setMaterialToAllSurfaces (new TextureMaterial (new Texture (bmp)));
+			var bmp:BitmapData = texture.bitmap;
+			// does not work
+			//if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
+			mesh.setMaterialToAllSurfaces (new TextureMaterial (new Texture (bmp), 1, true));
+
+			// collect lava meshes for animation
+			if (texture.name.charAt(0) == "*") lavaFaceMeshes.push (mesh);
 
 			return mesh;
 		}
@@ -236,6 +246,35 @@
 		}
 
 		/**
+		 * "Animates" lava surfaces.
+		 */
+		private function animateLavaFaces ():void {
+			var du:Number = 0.01, dv:Number = 0.005;
+			var a:Point, b:Point, c:Point;
+			for each (var mesh:Mesh in lavaFaceMeshes) {
+				//for each (var face:Face in mesh.faces) {
+				for (var i:int = 0; i < mesh.faces.length; i++) {
+					var face:Face = mesh.getFaceById (i);
+					a = face.aUV; b = face.bUV; c = face.cUV;
+					// du
+					a.x += du; b.x += du; c.x += du;
+					if (Math.min (a.x, Math.min (b.x, c.x)) > 1) {
+						a.x -= 1; b.x -= 1; c.x -= 1;
+					}
+					// dv
+					a.y += dv; b.y += dv; c.y += dv;
+					if (Math.min (a.y, Math.min (b.y, c.y)) > 1) {
+						a.y -= 1; b.y -= 1; c.y -= 1;
+					}
+					// set new coordinates
+					face.aUV = a; face.bUV = b; face.cUV = c;
+				}
+			}
+			// fluctuate camera position to work around engine bug
+			camera.z += 1; camera.z -= 1;
+		}
+
+		/**
 		 * Binds view dimensions to stage.
 		 */
 		private function onResize(e:Event):void {
@@ -248,7 +287,9 @@
 		 */
 		private function onRenderTick(e:Event):void {
 			// move
-			wasd.processInput();
+			wasd.processInput ();
+			// animate lava
+			animateLavaFaces ();
 			// show visible leaves only - does not work at the moment
 /*
 			var idx:int = findLeaf (camera.coords);
@@ -257,7 +298,7 @@
 			}
 */
 			// render
-			scene.calculate();
+			scene.calculate ();
 		}
 
 		/**
