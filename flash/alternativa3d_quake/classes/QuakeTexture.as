@@ -32,32 +32,89 @@ package {
 				var tt:Timer = new Timer (100); tt.addEventListener (TimerEvent.TIMER, onTimer); tt.start ();
 
 				if (texture.name.charAt (0) == "*") {
-					lava = true;
-					lavaColorTransform = new ColorTransform;
-					lavaMatrix = new Matrix;
+					// this is lava
+					lava = true; lavaMatrix = new Matrix;
 				}
+/*
+ * from r_light.c
+
+static int
+calc_lighting_1 (msurface_t  *surf, int ds, int dt)
+{
+	int         se_s = ((surf->extents[0] >> 4) + 1);
+	int         se_t = ((surf->extents[0] >> 4) + 1);
+	int         se_size = se_s * se_t;
+	int         r = 0, maps;
+	byte       *lightmap;
+	unsigned int scale;
+
+	ds >>= 4;
+	dt >>= 4;
+
+	lightmap = surf->samples;
+	if (lightmap) {
+		lightmap += dt * se_s + ds;
+
+		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255;
+			 maps++) {
+			scale = d_lightstylevalue[surf->styles[maps]];
+			r += *lightmap * scale;
+			lightmap += se_size;
+		}
+
+		r >>= 8; // d_lightstylevalue[*] defaults to 256, hence >>= 8
+	}
+
+	ambientcolor[2] = ambientcolor[1] = ambientcolor[0] = r;
+
+	return r;
+}
+
+called as:
+		tex = surf->texinfo;
+
+		s = DotProduct (mid, tex->vecs[0]) + tex->vecs[0][3];
+		t = DotProduct (mid, tex->vecs[1]) + tex->vecs[1][3];
+
+		if (s < surf->texturemins[0] || t < surf->texturemins[1])
+			continue;
+
+		ds = s - surf->texturemins[0];
+		dt = t - surf->texturemins[1];
+
+		if (ds > surf->extents[0] || dt > surf->extents[1])
+			continue;
+
+		if (!surf->samples)
+			return 0;
+
+		if (mod_lightmap_bytes == 1)
+			return calc_lighting_1 (surf, ds, dt);
+
+texturemins and extents:
+ (dot (vertex, tex axis) + tex offset) rounded to 16
+UVs:
+ (above expression) / texture dimension, w or h
+			
+*/
 			}
 		}
 
 		private var t:Number = 0;
 
 		private var lava:Boolean = false;
-		private var lavaColorTransform:ColorTransform, lavaMatrix:Matrix;
+		private var lavaMatrix:Matrix;
 
 		private function onTimer (e:TimerEvent):void {
 			// count the time
 			t += 0.1; if (t > 6.2831853) t -= 6.2831853;
 
 			if (lava) {
-				// scroll the bloody lava
-				lavaColorTransform.redOffset = 50 + 77 * (1 + Math.sin (t));
-				lavaColorTransform.greenMultiplier = lavaColorTransform.blueMultiplier = 0.5 + 0.5 * (1 + Math.cos (t));
+				// scroll the lava
 				var w:Number = bitmapData.width;
-				lavaMatrix.tx ++; if (lavaMatrix.tx > bitmapData.width) lavaMatrix.tx -= bitmapData.width;
-				bitmapData.draw (texture.bitmap, lavaMatrix, lavaColorTransform);
-				lavaMatrix.tx -= bitmapData.width;
-				bitmapData.draw (texture.bitmap, lavaMatrix, lavaColorTransform);
-				lavaMatrix.tx += bitmapData.width;
+				lavaMatrix.tx ++; if (lavaMatrix.tx > w) lavaMatrix.tx -= w;
+				bitmapData.draw (texture.bitmap, lavaMatrix); lavaMatrix.tx -= w;
+				bitmapData.draw (texture.bitmap, lavaMatrix); lavaMatrix.tx += w;
 			}
 		}
 	}
