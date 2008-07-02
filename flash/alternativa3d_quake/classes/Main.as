@@ -41,7 +41,6 @@
 		private var linearNodeMap:Array = [];
 		private var faceMeshesMap:Array = [];
 		private var faceTexturesMap:Array = [];
-		private var lavaFaceMeshes:Array = [];
 
 		/**
 		 * Constructor.
@@ -222,13 +221,9 @@
 			mesh.createSurface (mFaces);
 
 			// create and apply material
-			var bmp:BitmapData = texture.bitmap;
-			// does not work
+			// does not work:
 			//if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
-			mesh.setMaterialToAllSurfaces (new TextureMaterial (new Texture (bmp), 1, true));
-
-			// collect lava meshes for animation
-			if (texture.name.charAt(0) == "*") lavaFaceMeshes.push (mesh);
+			mesh.setMaterialToAllSurfaces (new TextureMaterial (new QuakeTexture (texture, face), 1, true));
 
 			return mesh;
 		}
@@ -246,35 +241,6 @@
 		}
 
 		/**
-		 * "Animates" lava surfaces.
-		 */
-		private function animateLavaFaces ():void {
-			var du:Number = 0.01, dv:Number = 0.005;
-			var a:Point, b:Point, c:Point;
-			for each (var mesh:Mesh in lavaFaceMeshes) {
-				//for each (var face:Face in mesh.faces) {
-				for (var i:int = 0; i < mesh.faces.length; i++) {
-					var face:Face = mesh.getFaceById (i);
-					a = face.aUV; b = face.bUV; c = face.cUV;
-					// du
-					a.x += du; b.x += du; c.x += du;
-					if (Math.min (a.x, Math.min (b.x, c.x)) > 1) {
-						a.x -= 1; b.x -= 1; c.x -= 1;
-					}
-					// dv
-					a.y += dv; b.y += dv; c.y += dv;
-					if (Math.min (a.y, Math.min (b.y, c.y)) > 1) {
-						a.y -= 1; b.y -= 1; c.y -= 1;
-					}
-					// set new coordinates
-					face.aUV = a; face.bUV = b; face.cUV = c;
-				}
-			}
-			// fluctuate camera position to work around engine bug
-			camera.z += 1; camera.z -= 1;
-		}
-
-		/**
 		 * Binds view dimensions to stage.
 		 */
 		private function onResize(e:Event):void {
@@ -288,8 +254,6 @@
 		private function onRenderTick(e:Event):void {
 			// move
 			wasd.processInput ();
-			// animate lava
-			animateLavaFaces ();
 			// show visible leaves only - does not work at the moment
 /*
 			var idx:int = findLeaf (camera.coords);

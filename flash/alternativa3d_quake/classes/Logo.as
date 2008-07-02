@@ -8,7 +8,7 @@
 		 * In order to compile with CS3, comment next two lines.
 		 */
 		[Embed(source="../quake.png")]
-		private var QuakePng:Class;
+		private var LogoPng:Class;
 
 		/**
 		 * Constructor.
@@ -23,7 +23,7 @@
 		private function onStage (event:Event):void {
 			removeEventListener (Event.ADDED_TO_STAGE, onStage);
 
-			logo = new QuakePng; addChild (logo);
+			logoPng = new LogoPng; addChild (logoPng);
 			stage.addEventListener(Event.RESIZE, onResize); onResize(null);
 		}
 
@@ -31,10 +31,10 @@
 		 * Centers the logo.
 		 */
 		private function onResize(e:Event):void {
-			logo.x = (stage.stageWidth - logo.width) / 2;
-			logo.y = (stage.stageHeight - logo.height) / 2;
+			logoPng.x = (stage.stageWidth - logoPng.width) / 2;
+			logoPng.y = (stage.stageHeight - logoPng.height) / 2;
 		}
 
-		private var logo:Bitmap;
+		private var logoPng:Bitmap;
 	}
 }
