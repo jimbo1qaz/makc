@@ -39,7 +39,7 @@
 		private var normal:Point3D = new Point3D;
 
 		private var linearNodeMap:Array = [];
-		private var faceMeshesMap:Array = [];
+		private var faceSurfacesMap:Array = [];
 		private var faceTexturesMap:Array = [];
 
 		/**
@@ -83,6 +83,7 @@
 			reader.addEventListener(Event.COMPLETE, onBspComplete);
 			//reader.addEventListener(ProgressEvent.PROGRESS, onBspProgress);
 			reader.load("openquartz.sf.net/am1.bsp");
+			//reader.load("quakexna.googlecode.com/debug.bsp");
 		}
 
 		/**
@@ -149,8 +150,11 @@
 
 					mesh = createNodeFace (face, node);
 
-					faceMeshesMap [node.firstface + i] = mesh;
+					faceSurfacesMap [node.firstface + i] = Surface (mesh.surfaces.peek ());
 					faceTexturesMap [node.firstface + i] = Surface (mesh.surfaces.peek ()).material;
+
+///TextureMaterial(faceTexturesMap [node.firstface + i]).wireColor = 155; 
+///TextureMaterial(faceTexturesMap [node.firstface + i]).wireThickness = 0;
 
 					mesh.mobility = depth; scene.root.addChild (mesh);
 				}
@@ -218,12 +222,12 @@
 					m++;
 				}
 			}
-			mesh.createSurface (mFaces);
+			var sf:Surface = mesh.createSurface (mFaces);
 
 			// create and apply material
 			// does not work:
 			//if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
-			mesh.setMaterialToAllSurfaces (new TextureMaterial (new QuakeTexture (texture, face), 1, true));
+			sf.material = new TextureMaterial (new QuakeTexture (texture, face, reader), 1, true);
 
 			return mesh;
 		}
@@ -306,17 +310,15 @@
 			var visisz:Array = reader.visibility;
 			var v:int = leaf.visofs;
 			var i:int, j:int, bit:int, faceIndex:int;
-			var mesh:Mesh;
+			var sf:Surface;
 
 			// 1st, hide everything
-			for each (mesh in faceMeshesMap)
-				mesh.setMaterialToAllSurfaces (null);
-//trace (faceMeshesMap.length + " meshes hidden");
+			for each (sf in faceSurfacesMap)
+				sf.material = null;
 
 			// adjust player z (probably to match PVS)
 			//var playerZ:Number = leaf.mins[2] + 60; camera.z = playerZ;
 
-//var c:int = 0;
 			for(i = 1; i < numleafs; v++)
 			{
 				if(visisz[v] == 0)
@@ -336,17 +338,15 @@
 							leaf = BspLeaf (reader.leaves[i]);
 							for (j = 0; j < leaf.nummarksurfaces; j++ ) {
 								faceIndex = reader.marksurfaces[leaf.firstmarksurface + j];
-								mesh = faceMeshesMap [faceIndex];
-								if (mesh) {
-									mesh.setMaterialToAllSurfaces (faceTexturesMap [faceIndex]);
-//c++;
+								sf = faceSurfacesMap [faceIndex];
+								if (sf) {
+									sf.material = faceTexturesMap [faceIndex];
 								}
 							}
 						}
 					}
 				}
 			}
-//trace (c + " meshes shown");
 		}
 	}
 }
