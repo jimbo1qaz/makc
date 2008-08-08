@@ -153,6 +153,7 @@
 					faceSurfacesMap [node.firstface + i] = Surface (mesh.surfaces.peek ());
 					faceTexturesMap [node.firstface + i] = Surface (mesh.surfaces.peek ()).material;
 
+///TextureMaterial(faceTexturesMap [node.firstface + i]).precision = -1;
 ///TextureMaterial(faceTexturesMap [node.firstface + i]).wireColor = 155; 
 ///TextureMaterial(faceTexturesMap [node.firstface + i]).wireThickness = 0;
 
@@ -175,6 +176,9 @@
 			u = new Point3D (texInfo.u_axis[0], texInfo.u_axis[1], texInfo.u_axis[2]);
 			v = new Point3D (texInfo.v_axis[0], texInfo.v_axis[1], texInfo.v_axis[2]);
 
+			face.min_s = 1e10; face.max_s = -1e10;
+			face.min_t = 1e10; face.max_t = -1e10;
+
 			// reconstruct a polygon
 			var poly:Array = [], vertex:Array;
 			for (i = 0; i < face.num_edges; i++) {
@@ -188,6 +192,12 @@
 				w.x = vertex[0]; w.y = vertex[1]; w.z = vertex[2];
 				vertex[3] =  ( Point3D.dot(w, u) + texInfo.u_offset ) / texture.width;
 				vertex[4] = -( Point3D.dot(w, v) + texInfo.v_offset ) / texture.height;
+
+				if (face.min_s > vertex[3]) face.min_s = vertex[3];
+				if (face.min_t > vertex[4]) face.min_t = vertex[4];
+
+				if (face.max_s < vertex[3]) face.max_s = vertex[3];
+				if (face.max_t < vertex[4]) face.max_t = vertex[4];
 
 				poly.push (vertex);
 			}
@@ -224,10 +234,15 @@
 			}
 			var sf:Surface = mesh.createSurface (mFaces);
 
+			// join vertices back
+			if (mesh.vertices.length > 3)
+				MeshUtils.autoWeldVertices (mesh, 0.01);
+
 			// create and apply material
 			// does not work:
 			//if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
-			sf.material = new TextureMaterial (new QuakeTexture (texture, face, reader), 1, true);
+			var qt:QuakeTexture = new QuakeTexture (texture, face, reader);
+			qt.correctUVsInMesh (mesh); sf.material = new TextureMaterial (qt, 1, true);
 
 			return mesh;
 		}
