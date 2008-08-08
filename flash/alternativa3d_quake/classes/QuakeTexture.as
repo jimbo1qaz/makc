@@ -1,9 +1,16 @@
-package {
+﻿package {
 	import flash.display.BitmapData;
+	import flash.display.BlendMode;
+	import flash.display.Shape;
 	import flash.events.TimerEvent;
 	import flash.geom.ColorTransform;
 	import flash.geom.Matrix;
+	import flash.geom.Rectangle;
+	import flash.utils.ByteArray;
 	import flash.utils.Timer;
+
+	import alternativa.engine3d.core.Face;
+	import alternativa.engine3d.core.Mesh;
 	import alternativa.types.Texture;
 
 	import com.suite75.quake1.io.*;
@@ -16,11 +23,13 @@ package {
 
 		private var texture:BspTexture;
 		private var face:BspFace;
+		private var reader:BspReader;
 
-		public function QuakeTexture (texture:BspTexture, face:BspFace) {
+		public function QuakeTexture (texture:BspTexture, face:BspFace, reader:BspReader) {
 			super (texture.bitmap);
 			this.texture = texture;
 			this.face    = face;
+			this.reader  = reader;
 
 			if (texture.animated || face.lightmap_offset >= 0) {
 
@@ -33,77 +42,97 @@ package {
 
 				if (texture.name.charAt (0) == "*") {
 					// this is lava
-					lava = true; lavaMatrix = new Matrix;
+					lava = true;
+					lavaMatrix = new Matrix;
 				}
-/*
- * from r_light.c
 
-static int
-calc_lighting_1 (msurface_t  *surf, int ds, int dt)
-{
-	int         se_s = ((surf->extents[0] >> 4) + 1);
-	int         se_t = ((surf->extents[0] >> 4) + 1);
-	int         se_size = se_s * se_t;
-	int         r = 0, maps;
-	byte       *lightmap;
-	unsigned int scale;
-
-	ds >>= 4;
-	dt >>= 4;
-
-	lightmap = surf->samples;
-	if (lightmap) {
-		lightmap += dt * se_s + ds;
-
-		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255;
-			 maps++) {
-			scale = d_lightstylevalue[surf->styles[maps]];
-			r += *lightmap * scale;
-			lightmap += se_size;
+				else if (face.lightmap_offset >= 0) {
+					// this face is lit
+					light = true;
+					lightMatrix = new Matrix; buildLightMaps ();
+				}
+			}
 		}
 
-		r >>= 8; // d_lightstylevalue[*] defaults to 256, hence >>= 8
-	}
+		/**
+		 * This builds light map.
+		 * I pulled it here because BspReader does not seem to implement it correctly.
+		 * 
+		 * There are up to 4 lightmaps, the result is weighted sum; face.lightmap_styles
+		 * defines each lightmap weight. Possible values include:
+		 *   0 - static light
+		 *   1 - fast pulsating light
+		 *   2 - slow pulsating light
+		 * 255 - map not used
+		 */
+		private function buildLightMaps ():void {
+/* can't get this to work :( something about light maps is broken in parser.
 
-	ambientcolor[2] = ambientcolor[1] = ambientcolor[0] = r;
+			// lightmaps dimensions
+			var se_s:int = (face.extents[0] >> 4) + 1;
+			var se_t:int = (face.extents[1] >> 4) + 1, se_size:int = se_s * se_t;
 
-	return r;
-}
+			// texture tiling matrix
+			lightMatrix.translate ( -face.min_s, -face.min_t);
+			lightMatrix.scale (1 / (face.max_s - face.min_s), 1 / (face.max_t - face.min_t));
 
-called as:
-		tex = surf->texinfo;
-
-		s = DotProduct (mid, tex->vecs[0]) + tex->vecs[0][3];
-		t = DotProduct (mid, tex->vecs[1]) + tex->vecs[1][3];
-
-		if (s < surf->texturemins[0] || t < surf->texturemins[1])
-			continue;
-
-		ds = s - surf->texturemins[0];
-		dt = t - surf->texturemins[1];
-
-		if (ds > surf->extents[0] || dt > surf->extents[1])
-			continue;
-
-		if (!surf->samples)
-			return 0;
-
-		if (mod_lightmap_bytes == 1)
-			return calc_lighting_1 (surf, ds, dt);
-
-texturemins and extents:
- (dot (vertex, tex axis) + tex offset) rounded to 16
-UVs:
- (above expression) / texture dimension, w or h
-			
-*/
+			// collect static lightmaps
+			var bm:BitmapData = new BitmapData (16 * se_s, 16 * se_t, false, 0); bm.lock ();
+			var lightdata:ByteArray = reader.data,
+				lightlump:BspLump = reader.header.lumps[BspLump.LUMP_LIGHTING],
+				r:Rectangle = new Rectangle (0, 0, 16, 16);
+			lightdata.position = lightlump.offset + face.lightmap_offset;
+			for (var ds:int = 0; ds < se_s; ds++)
+			for (var dt:int = 0; dt < se_t; dt++) {
+				var c:int = 128; // ambient;
+				for (var maps:int = 0; maps < 4; maps++)
+				if (face.lightmap_styles [maps] == 0) {
+					c += lightdata [maps * se_size + dt * se_s + ds];
+				}
+				if (c > 255) c = 255;
+				r.x = 16 * ds; r.y = 16 * dt; bm.fillRect (r, (c << 16) | (c << 8) | c);
 			}
+			bm.unlock ();
+
+			// hack to get texture back into game
+			var s:Shape = new Shape;
+			s.graphics.beginBitmapFill (texture.bitmap, lightMatrix);
+			s.graphics.drawRect (0, 0, bm.width, bm.height);
+			s.graphics.endFill ();
+			bm.draw (s, null, null, BlendMode.MULTIPLY);
+			// apply map
+			bitmapData = bm;
+*/
+		}
+
+		// TODO change this to handle dynamic maps
+		private function applyLightMap (dest:BitmapData, map:BitmapData):void {
+			dest.draw (map, lightMatrix, null, BlendMode.ADD, map.rect, true);
 		}
 
 		private var t:Number = 0;
 
 		private var lava:Boolean = false;
 		private var lavaMatrix:Matrix;
+
+		private var light:Boolean = false;
+		private var lightMatrix:Matrix;
+
+		/**
+		 * Correct UVs for light-mapped textures
+		 */
+		public function correctUVsInMesh (mesh:Mesh):void {
+			// FIXME needless, since buildLightMaps doesnt work
+			if (light && false) {
+				var faceArray:Array = mesh.faces.toArray (true);
+				for (var i:int = 0; i < faceArray.length; i++) {   
+					var face:Face = faceArray [i];   
+					face.aUV = lightMatrix.transformPoint (face.aUV);
+					face.bUV = lightMatrix.transformPoint (face.bUV);
+					face.cUV = lightMatrix.transformPoint (face.cUV);
+				}   
+			}
+		}
 
 		private function onTimer (e:TimerEvent):void {
 			// count the time
