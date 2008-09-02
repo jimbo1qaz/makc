@@ -15,18 +15,20 @@
 
 	import com.suite75.quake1.io.*;
 
-
 	/**
 	 * This class performs special effects on textures.
 	 */
 	public class QuakeTexture extends Texture {
 
+		private var bmData:BitmapData;
 		private var texture:BspTexture;
 		private var face:BspFace;
 		private var reader:BspReader;
 
 		public function QuakeTexture (texture:BspTexture, face:BspFace, reader:BspReader) {
-			super (texture.bitmap);
+			// to work with new swc ver...
+			this.bmData = texture.bitmap;
+
 			this.texture = texture;
 			this.face    = face;
 			this.reader  = reader;
@@ -34,8 +36,8 @@
 			if (texture.animated || face.lightmap_offset >= 0) {
 
 				// make new bitmap in case our face is lit or animated
-				bitmapData = new BitmapData (texture.bitmap.width, texture.bitmap.height);
-				bitmapData.draw (texture.bitmap);
+				bmData = new BitmapData (texture.bitmap.width, texture.bitmap.height);
+				bmData.draw (texture.bitmap);
 
 				// launch the timer
 				var tt:Timer = new Timer (100); tt.addEventListener (TimerEvent.TIMER, onTimer); tt.start ();
@@ -52,6 +54,8 @@
 					lightMatrix = new Matrix; buildLightMaps ();
 				}
 			}
+
+			super (bmData);
 		}
 
 		/**
@@ -101,7 +105,7 @@
 			s.graphics.endFill ();
 			bm.draw (s, null, null, BlendMode.MULTIPLY);
 			// apply map
-			bitmapData = bm;
+			bmData = bm;
 */
 		}
 
@@ -140,10 +144,10 @@
 
 			if (lava) {
 				// scroll the lava
-				var w:Number = bitmapData.width;
+				var w:Number = bmData.width;
 				lavaMatrix.tx ++; if (lavaMatrix.tx > w) lavaMatrix.tx -= w;
-				bitmapData.draw (texture.bitmap, lavaMatrix); lavaMatrix.tx -= w;
-				bitmapData.draw (texture.bitmap, lavaMatrix); lavaMatrix.tx += w;
+				bmData.draw (texture.bitmap, lavaMatrix); lavaMatrix.tx -= w;
+				bmData.draw (texture.bitmap, lavaMatrix); lavaMatrix.tx += w;
 			}
 		}
 	}
