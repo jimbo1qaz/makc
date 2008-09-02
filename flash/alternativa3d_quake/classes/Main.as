@@ -39,7 +39,6 @@
 		private var normal:Point3D = new Point3D;
 
 		private var linearNodeMap:Array = [];
-		private var faceSurfacesMap:Array = [];
 		private var faceTexturesMap:Array = [];
 
 		/**
@@ -150,7 +149,6 @@
 
 					mesh = createNodeFace (face, node);
 
-					faceSurfacesMap [node.firstface + i] = Surface (mesh.surfaces.peek ());
 					faceTexturesMap [node.firstface + i] = Surface (mesh.surfaces.peek ()).material;
 
 ///TextureMaterial(faceTexturesMap [node.firstface + i]).precision = -1;
@@ -242,7 +240,7 @@
 			// does not work:
 			//if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
 			var qt:QuakeTexture = new QuakeTexture (texture, face, reader);
-			qt.correctUVsInMesh (mesh); sf.material = new TextureMaterial (qt, 1, true);
+			qt.correctUVsInMesh (mesh); sf.material = new QuakeTextureMaterial (qt, 1, true);
 
 			return mesh;
 		}
@@ -325,11 +323,11 @@
 			var visisz:Array = reader.visibility;
 			var v:int = leaf.visofs;
 			var i:int, j:int, bit:int, faceIndex:int;
-			var sf:Surface;
+			var tm:QuakeTextureMaterial;
 
 			// 1st, hide everything
-			for each (sf in faceSurfacesMap)
-				sf.material = null;
+			for each (tm in faceTexturesMap)
+				tm.visible = false;
 
 			// adjust player z (probably to match PVS)
 			//var playerZ:Number = leaf.mins[2] + 60; camera.z = playerZ;
@@ -353,9 +351,9 @@
 							leaf = BspLeaf (reader.leaves[i]);
 							for (j = 0; j < leaf.nummarksurfaces; j++ ) {
 								faceIndex = reader.marksurfaces[leaf.firstmarksurface + j];
-								sf = faceSurfacesMap [faceIndex];
-								if (sf) {
-									sf.material = faceTexturesMap [faceIndex];
+								tm = faceTexturesMap [faceIndex];
+								if (tm) {
+									tm.visible = true;
 								}
 							}
 						}
