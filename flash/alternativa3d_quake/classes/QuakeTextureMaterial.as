@@ -1,7 +1,7 @@
 ﻿package  
 {
 	import alternativa.types.Texture;
-	import alternativa.engine3d.core.Camera3D;
+	import alternativa.engine3d.core.PolyPrimitive;
 	import alternativa.engine3d.display.Skin;
 	import alternativa.engine3d.materials.TextureMaterial;
 
@@ -25,10 +25,10 @@
 		/**
 		 * That's where magic happens...
 		 */
-        override alternativa3d function draw (param1:Camera3D, param2:Skin, param3:uint, param4:Array):void
+		override alternativa3d function canDraw (param1:PolyPrimitive):Boolean
         {
-			if (visible) super.draw (param1, param2, param3, param4);
-		}
+			return visible && super.canDraw (param1);
+        }
 
 		/**
 		 * Boolean value to control material visibility.
