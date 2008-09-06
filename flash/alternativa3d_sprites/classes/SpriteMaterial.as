@@ -5,15 +5,17 @@
 	import alternativa.engine3d.display.*;
 	import alternativa.engine3d.materials.*;
 	import flash.display.DisplayObject;
-	import flash.utils.ByteArray;
 
 	use namespace alternativa3d
 	public class SpriteMaterial extends SurfaceMaterial
 	{
 		private var _dobj:DisplayObject;
+		private var _wasDrawn:Boolean;
+
+		private static var _materials:Array = [];
 
 		public function SpriteMaterial(displayObject:DisplayObject, alpha:Number = 1, blendMode:String = "normal") {
-			super(alpha, blendMode); _dobj = displayObject;
+			super(alpha, blendMode); _dobj = displayObject; _wasDrawn = false; _materials.push (this);
 		}
 
 		override alternativa3d function canDraw(poly:PolyPrimitive):Boolean {
@@ -43,11 +45,14 @@
 
 			// show
 			_dobj.visible = true;
+
+			// remember this call
+			_wasDrawn = true;
 		}
 
 		override alternativa3d function clear (skin:Skin):void {
-			// hide
-			_dobj.visible = false;
+			// hide only if draw() was not already called
+			if (!_wasDrawn) _dobj.visible = false;
 		}
 
 		/**
@@ -60,15 +65,28 @@
 		/**
 		 * Helper method to make a sprite in one line of code.
 		 */
-		public static function make (displayObject:DisplayObject):Mesh {
+		public static function make (displayObject:DisplayObject, mobility:Number = 9e9, size:Number = 1e-2):Mesh {
 			var m:Mesh = new Mesh;
+			// a pyramid has at least one face visible from any direction
 			m.createVertex(0, 0, 0, 0);
-			m.createVertex(0, 0, 0, 1);
-			m.createVertex(0, 0, 0, 2);
-			m.createSurface([m.createFace([0, 1, 2], 0)], 0);
+			m.createVertex(size, 0, 0, 1);
+			m.createVertex(0, size, 0, 2);
+			m.createVertex(0, 0, size, 3);
+			m.createSurface([
+				m.createFace([1, 0, 2], 0), m.createFace([1, 2, 3], 1),
+				m.createFace([3, 2, 0], 2), m.createFace([3, 0, 1], 3)
+			], 0);
 			m.setMaterialToSurface(new SpriteMaterial (displayObject), 0);
-			m.mobility = 9e9;
+			m.mobility = mobility;
 			return m;
+		}
+
+		/**
+		 * Prepares sprite materials for rendering.
+		 * Always call this before calculate() in order for sprite materials to render corectly.
+		 */
+		public static function prepare ():void {
+			for each (var sm:SpriteMaterial in _materials) sm._wasDrawn = false;
 		}
 	}
 }
