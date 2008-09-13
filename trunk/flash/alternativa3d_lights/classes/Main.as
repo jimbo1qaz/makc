@@ -90,8 +90,6 @@
 			camera = new Camera3D(); camera.z = 200; scene.root.addChild(camera);
 			view = new View(); addChild(view); view.camera = camera;
 
-			// let's do magic
-
 			FPS.init(stage);
 
 			stage.addEventListener(Event.RESIZE, onResize);
@@ -106,6 +104,7 @@
 
 		private var t:Number = 0, lightPos:Point3D = new Point3D;
 		private function onEnterFrame(e:Event):void {
+			// let's do magic
 			LightTextureMaterial.prepare ();
 
 			// animate light [0];
