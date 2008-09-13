@@ -8,6 +8,7 @@
 	import alternativa.engine3d.core.Surface;
 	import alternativa.engine3d.display.View;
 	import alternativa.engine3d.materials.*//TextureMaterial;
+	import alternativa.engine3d.primitives.Box;
 	import alternativa.types.Point3D;
 	import alternativa.types.Texture;
 	import alternativa.utils.FPS;
@@ -40,6 +41,8 @@
 
 		private var linearNodeMap:Array = [];
 		private var faceTexturesMap:Array = [];
+
+		private var lights:Array;
 
 		/**
 		 * Constructor.
@@ -94,12 +97,15 @@
 			if (reader.header.version != BspLump.BSPVERSION)
 				throw new Error ("Supplied bsp file is not Quake1 map");
 
+			// extract lights
+			lights = reader.entities.findEntitiesByClassName ("light");
+
 			// build linear map of BSP nodes for tree reconstruction
 			var idx:int = BspModel (reader.models [0]).headnode [0];
 			buildLinearNodeMap (reader.nodes [idx] as BspNode, 0);
 	
 			// reconstruct BSP tree
-			stage.addEventListener (Event.ENTER_FRAME, buildBSPNodes);
+			addEventListener (Event.ENTER_FRAME, buildBSPNodes);
 		}
 
 		/**
@@ -240,7 +246,7 @@
 			// does not work:
 			//if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
 			var qt:QuakeTexture = new QuakeTexture (texture, face, reader);
-			qt.correctUVsInMesh (mesh); sf.material = new QuakeTextureMaterial (qt, 1, true);
+			qt.correctUVsInMesh (mesh); sf.material = new QuakeTextureMaterial (qt, texture.animated ? [] : lights, 1, true);
 
 			return mesh;
 		}

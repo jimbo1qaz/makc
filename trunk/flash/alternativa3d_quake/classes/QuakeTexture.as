@@ -33,7 +33,7 @@
 			this.face    = face;
 			this.reader  = reader;
 
-			if (texture.animated || face.lightmap_offset >= 0) {
+			if (texture.animated /*|| face.lightmap_offset >= 0*/) {
 
 				// make new bitmap in case our face is lit or animated
 				bmData = new BitmapData (texture.bitmap.width, texture.bitmap.height);
