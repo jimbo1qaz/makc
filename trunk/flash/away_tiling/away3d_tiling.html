@@ -1,0 +1,118 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Away3d bitmap tiling tutorial</title>
+
+<link type="text/css" rel="stylesheet" href="dp.SyntaxHighlighter/Styles/SyntaxHighlighter.css"></link>
+<script language="javascript" src="dp.SyntaxHighlighter/Scripts/shCore.js"></script>
+<script language="javascript" src="dp.SyntaxHighlighter/Scripts/shBrushCSharp.js"></script>
+<script language="javascript" src="dp.SyntaxHighlighter/Scripts/shBrushXml.js"></script>
+<script language="javascript">
+dp.SyntaxHighlighter.ClipboardSwf = 'dp.SyntaxHighlighter/Scripts/clipboard.swf';
+function dpOnLoad () {
+dp.SyntaxHighlighter.HighlightAll('code');
+}
+</script>
+
+</head>
+<body bgcolor="white" style="font: normal 14px verdana" onload="dpOnLoad ();">
+<h4>Away3d bitmap tiling tutorial</h4>
+
+Away3D port of <a href="http://www.flashsandy.org/tutorials/3.0/v302_tiling">Sandy bitmap tiling tutorial</a> <br /><br />
+
+In this tutorial, we will use bitmap tiling feature to simulate a flight over Death Star surface.
+ So the first thing to do is to build a model of the surface.
+ From the quick analythis of the scene, we can see that we are going to need at least 5 planes: <br /><br />
+
+<center><img src="http://www.flashsandy.org/_media/tutorials/3.0/v302_tiling/deathstarcanyon.jpg" /></center><br />
+
+We can use same texture for two surface planes, and a bit darker textures for canyon sides and floor:
+
+<pre name="code" class="c-sharp">
+	// create death star materials
+	dsMat1 = new TransformBitmapMaterial (new ImageDS1 (1, 1), {precision: 3, repeat: true});
+	dsMat2 = new TransformBitmapMaterial (new ImageDS2 (1, 1), {precision: 3, repeat: true});
+	dsMat3 = new TransformBitmapMaterial (new ImageDS3 (1, 1), {precision: 3, repeat: true});
+</pre>
+
+Next, you make 5 planes, arrange them to form canyon, assign materials, and add to scene.
+ To cover the whole screen, our planes are going to be very large, and so to avoid perspective distortions,
+ we have to use big numer of segments when creating our planes:
+
+<pre name="code" class="c-sharp">
+	// create planes
+	var pLeft:Plane = new Plane ({ name:"pLeft", segmentsW:20, segmentsH:20, material:dsMat1,
+		width: 10000, height: 10000, x: -5000 -200, y: -200, z: -4000 });
+
+	var pRiht:Plane = new Plane ({ name:"pRiht", segmentsW:20, segmentsH:20, material:dsMat1,
+		width: 10000, height: 10000, x: +5000 +200, y: -200, z: -4000 });
+
+	var pSidL:Plane = new Plane ({ name:"pSidL", segmentsW:2, segmentsH:20, material:dsMat2,
+		width: 400, height: 10000, x: -200, y: -400, z: -4000, rotationZ: 90,
+		// we are actually going to be looking at plane backface
+		bothsides: true });
+
+	var pSidR:Plane = new Plane ({ name:"pSidR", segmentsW:2, segmentsH:20, material:dsMat2,
+		width: 400, height: 10000, x: +200, y: -400, z: -4000, rotationZ: 90 });
+
+	var pBott:Plane = new Plane ({ name:"pBott", segmentsW:2, segmentsH:20, material:dsMat3,
+		width: 400, height: 10000, y: -600, z: -4000 });
+
+	// add them to scene
+	view.scene.addChild (pLeft); view.scene.addChild (pRiht);
+	view.scene.addChild (pSidL); view.scene.addChild (pSidR);
+	view.scene.addChild (pBott);
+</pre>
+
+Now, if you would render the scene like that, here is how it would look like: <br /><br />
+
+<center><img src="http://www.flashsandy.org/_media/tutorials/3.0/v302_tiling/deathstarbad.gif" /></center><br />
+
+Terrible, isn't it? This is where tiling thing comes in.
+ New <a href="http://away3d.googlecode.com/svn/trunk/docs/Away3DAPIReferenceV2.1.html#TransformBitmapMaterial-scaleX">scaleX</a>
+ and <a href="http://away3d.googlecode.com/svn/trunk/docs/Away3DAPIReferenceV2.1.html#TransformBitmapMaterial-scaleY">scaleY</a>
+ properties of TransformBitmapMaterial allow you to tile your texture as many times as it takes to make large planes look acceptable in this case. 
+
+<pre name="code" class="c-sharp">
+	// scale materials
+	dsMat1.scaleX = dsMat1.scaleY = dsMat2.scaleY = dsMat3.scaleY = -1/10;
+</pre>
+
+Additionally, TransformBitmapMaterial allows you to specify texture
+ <a href="http://away3d.googlecode.com/svn/trunk/docs/Away3DAPIReferenceV2.1.html#TransformBitmapMaterial-offsetX">offset</a>.
+ This is especially handy, since we can simulate continuous motion without actually moving geometry anywhere.
+ For this purpose, we will set tiling in Event.ENTER_FRAME handler along with scene rendering: 
+
+<pre name="code" class="c-sharp">
+	dsMat1.offsetY = -offset * dsMat1.height;
+	dsMat2.offsetY = -offset * dsMat2.height;
+	dsMat3.offsetY = -offset * dsMat3.height;
+</pre>
+
+The thing that remains to do is to get offset changing and, perhaps, add a bit of interactivity:
+
+<pre name="code" class="c-sharp">
+	// add some interactivity
+	offset += 1e-3 + 5e-5 * (300 - mouseY); if (offset > 1) offset -= 1;
+
+	view.camera.x = mouseX - 300;
+	view.camera.y = mouseY;
+
+	view.camera.lookAt (target);
+	view.render();
+</pre>
+
+And we're done. It's time to see the result: <br /><br />
+
+<center>
+	<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0" width="600" height="300" id="away3d_tiling" align="middle">
+	<param name="allowScriptAccess" value="sameDomain" />
+	<param name="allowFullScreen" value="false" />
+	<param name="movie" value="away3d_tiling.swf" /><param name="quality" value="low" /><param name="bgcolor" value="#000000" />	<embed src="away3d_tiling.swf" quality="low" bgcolor="#000000" width="600" height="300" name="away3d_tiling" align="middle" allowScriptAccess="sameDomain" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />
+	</object>
+</center><br />
+
+Flash CS3 sources for this tutorial are available <a href="http://makc.googlecode.com/svn/trunk/flash/away_tiling/">here</a>.
+
+</body>
+</html>
