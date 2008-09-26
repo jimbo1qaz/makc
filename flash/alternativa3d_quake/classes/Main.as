@@ -8,7 +8,6 @@
 	import alternativa.engine3d.core.Surface;
 	import alternativa.engine3d.display.View;
 	import alternativa.engine3d.materials.*//TextureMaterial;
-	import alternativa.engine3d.primitives.Box;
 	import alternativa.types.Point3D;
 	import alternativa.types.Texture;
 	import alternativa.utils.FPS;
@@ -42,7 +41,7 @@
 		private var linearNodeMap:Array = [];
 		private var faceTexturesMap:Array = [];
 
-		private var lights:Array;
+		private static const BRIGHTNESS:Number = 1.5;
 
 		/**
 		 * Constructor.
@@ -69,6 +68,7 @@
 			scene = new Scene3D(); scene.root = new Object3D();
 			camera = new Camera3D(); camera.x = 150; camera.y = 150; camera.z = 150; scene.root.addChild(camera);
 			view = new View(); addChild(view); view.camera = camera;
+			view.transform.colorTransform = new ColorTransform (BRIGHTNESS, BRIGHTNESS, BRIGHTNESS);
 
 			wasd = new CameraController(stage); wasd.camera = camera; wasd.speed = 300;
 			wasd.setDefaultBindings(); wasd.controlsEnabled = true;
@@ -96,9 +96,6 @@
 			// we have all map info in reader
 			if (reader.header.version != BspLump.BSPVERSION)
 				throw new Error ("Supplied bsp file is not Quake1 map");
-
-			// extract lights
-			lights = reader.entities.findEntitiesByClassName ("light");
 
 			// build linear map of BSP nodes for tree reconstruction
 			var idx:int = BspModel (reader.models [0]).headnode [0];
@@ -128,6 +125,8 @@
 		 * Fired when there are BSP nodes to add.
 		 */
 		private function buildBSPNodes(e:Event):void {
+			var stageQuality:String = stage.quality; stage.quality = StageQuality.BEST;
+
 			var t:int = getTimer ();
 			while (getTimer () - t < 0.5 * 1000 / stage.frameRate) {
 
@@ -137,7 +136,7 @@
 					depth ++;
 					if (depth == linearNodeMap.length) {
 						// no more nodes left in the tree - we're done
-						logo.visible = false; removeEventListener (Event.ENTER_FRAME, buildBSPNodes); return;
+						logo.visible = false; removeEventListener (Event.ENTER_FRAME, buildBSPNodes); stage.quality = stageQuality; return;
 					}
 				}
 
@@ -164,6 +163,8 @@
 					mesh.mobility = depth; scene.root.addChild (mesh);
 				}
 			}
+
+			stage.quality = stageQuality;
 		}
 
 		/**
@@ -243,10 +244,8 @@
 				MeshUtils.autoWeldVertices (mesh, 0.01);
 
 			// create and apply material
-			// does not work:
-			//if (face.lightmap_offset >= 0) bmp = reader.buildLightMap(face, bmp);
 			var qt:QuakeTexture = new QuakeTexture (texture, face, reader);
-			qt.correctUVsInMesh (mesh); sf.material = new QuakeTextureMaterial (qt, texture.animated ? [] : lights, 1, true);
+			qt.correctUVsInMesh (mesh); sf.material = new QuakeTextureMaterial (qt, 1, true);
 
 			return mesh;
 		}
