@@ -2,4 +2,4 @@ Checkout this folder from:
 
  http://paperquake.googlecode.com/svn/trunk/as3/src/com/suite75/quake1
 
-For this project, revision 28 was used (with palette fix), but try using head first.
+For this project, revision 36 was used, but try using head first.
