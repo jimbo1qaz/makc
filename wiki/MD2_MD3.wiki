@@ -1,0 +1,24 @@
+#summary Quake vertex-based animation formats.
+#labels Featured
+
+= MD2 =
+
+MD2 is Quake II animated mesh file format. MD2 file simply contains N named animation frames with full set of vertex coordinates for each.
+
+  * [http://tfc.duke.free.fr/old/models/md2.htm Format description] (and C++ code)
+  * [http://project3d.home.sapo.pt/md2_tutorial.html 3DMax tutorial] (free import/export scripts included)
+  * [http://www.qtipplugin.com/index.htm 3DMax export plugin] (commercial)
+
+Free MD2 models:
+  [http://www.md2.sitters-electronics.nl/index.html md2.sitters-electronics.nl]|[http://polycount.com/models/quake2/ polycount.com]|[http://telias.free.fr/models_md2_menu.html telias.free.fr]|[http://archive.doomsdayhq.com/files.php?type=6 archive.doomsdayhq.com]
+
+
+= MD3 =
+
+MD3 is Quake III animated mesh file format. The primary difference from MD2 is addition of _tags_ - attachment points for another MD3 models.
+
+  * [http://linux.ucla.edu/~phaethon/q3/formats/md3format.html Format description]
+  * [http://education.mit.edu/starlogo-tng/shapes-tutorial/shapetutorial.html Model structure]
+
+Free MD3 models:
+  [http://planetquake.gamespy.com/View.php?view=Quake3.List&game=4 planetquake.gamespy.com][http://q3radiant.planetquake.gamespy.com/models.htm more from planetquake.gamespy.com]|[http://www.katsbits.com/htm/models.htm#md3 katsbits.com]|[http://ioquake3.org/extras/models/ ioquake3.org]|[http://www.quakeunity.com/browse=cat&cid=5 quakeunity.com]|[http://openarena.ws/svn/models/ openarena.ws]|http://www.fileplanet.com/33347/0/1/3/section/Models fileplanet.com]
