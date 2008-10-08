@@ -59,7 +59,7 @@
 			}
 
 			// create extrusion
-			ext = new Extrusion ("kraken", profile, tentacle.toSections ()); scene.root.addChild (ext);
+			ext = new Extrusion ("kraken", profile, tentacle.toSections (), false, false); scene.root.addChild (ext);
 
 			// add some material
 			var material:BitmapMaterial = new BitmapMaterial (Bitmap (new Tentacle).bitmapData,
