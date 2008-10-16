@@ -88,8 +88,8 @@
 
 			// mouse controls (k > 0 gives mouse some easing)
 			var k:Number = 0.6;
-			angle = k * angle + (1 - k) * (180 + 0.3 * (stage.stageWidth / 2 - mouseX));
-			radius = k * radius + (1 - k) * Math.min (400, Math.max (0, stage.stageHeight - mouseY));
+			angle = k * angle + (1 - k) * (180 + 0.3 * (600 / 2 - mouseX));
+			radius = k * radius + (1 - k) * Math.min (400, Math.max (0, 500 - mouseY));
 
 			// inflate breasts
 			bLeft.radius = bRight.radius = radius;
