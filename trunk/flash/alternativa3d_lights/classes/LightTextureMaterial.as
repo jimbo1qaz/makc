@@ -25,8 +25,6 @@
 		 */
 		public function LightTextureMaterial (texture:Texture, alpha:Number = 1, repeat:Boolean = true, smooth:Boolean = false, blendMode:String = "normal", wireThickness:Number = -1, wireColor:uint = 0, precision:Number = 10) {
 			super (texture, alpha, repeat, smooth, blendMode, wireThickness, wireColor, precision);
-
-			if (_skins == null) _skins = new Dictionary (true);
 		}
 
 		private var _lights:Array;
@@ -73,7 +71,7 @@
 					faceTransform.redOffset     = faceTransform.greenOffset     = faceTransform.blueOffset     = offset;
 				}
 
-				skin.transform.colorTransform = faceTransform; _skins [skin] = skin;
+				skin.transform.colorTransform = faceTransform;
 			}
 		}
 
@@ -86,20 +84,16 @@
 			mat.lights = lights; return mat;
 		}
 
-		private static var _skins:Dictionary;
 		private static var _defaultColorTransform:ColorTransform;
 
 		/**
-		 * Prepares materials for rendering.
-		 * Always call this before calculate() in order for other materials to render corectly.
+		 * Clears color transform in order for other materials to render corectly.
 		 */
-		public static function prepare ():void {
-			if (_skins != null) {
-				if (_defaultColorTransform == null)
-					_defaultColorTransform = new ColorTransform;
-				for each (var skin:Skin in _skins)
-					skin.transform.colorTransform = _defaultColorTransform;
-			}
+		override alternativa3d function clear (skin:Skin):void {
+			super.clear (skin);
+			if (_defaultColorTransform == null)
+				_defaultColorTransform = new ColorTransform;
+			skin.transform.colorTransform = _defaultColorTransform;
 		}
 
 		

@@ -104,8 +104,6 @@
 
 		private var t:Number = 0, lightPos:Point3D = new Point3D;
 		private function onEnterFrame(e:Event):void {
-			// let's do magic
-			LightTextureMaterial.prepare ();
 
 			// animate light [0];
 			lightPos.x = camera.z * Math.sin (2 * t); lightPos.y = camera.z * Math.cos (2 * t); lightPos.z = lightPos.y;
