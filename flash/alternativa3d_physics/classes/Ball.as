@@ -18,7 +18,7 @@
 	public class Ball
 	{
 		private var _collider:EllipsoidCollider;
-		public function get collider ():EllipsoidCollider { return _collider; }
+		public function set excludeSet (s:Set):void { _collider.collisionSet = s; }
 
 		private var _collision:Collision;
 		private var _doubleVelocityProjection:Point3D, _newPosition:Point3D;
@@ -26,7 +26,7 @@
 		private var _radius:Number = 10;
 		public function get radius ():Number { return _radius; }
 		public function set radius (r:Number):void {
-			_radius = r; _collider.radiusX = _collider.radiusY = _collider.radiusZ = r;
+			_radius = r; _collider.radiusX = _collider.radiusY = _collider.radiusZ = r; _updateShape ();
 		}
 
 		public var damping:Number = 0.6;
@@ -41,6 +41,8 @@
 			_doubleVelocityProjection = new Point3D; _newPosition = new Point3D;
 
 			position = new Point3D; velocity = new Point3D; acceleration = new Point3D;
+
+			shape = new Shape; _texture = new _BallTexture; _matrix = new Matrix;
 		}
 
 		public function step ():void {
@@ -64,8 +66,14 @@
 
 		// the code below have nothing to do with physics
 
+		public var shape:Shape;
+
 		[Embed(source="ball.jpg")]
 		private var _BallTexture:Class;
+
+		private var _texture:Bitmap;
+		private var _matrix:Matrix;
+
 		private function _drawCircle (g:Graphics, x:Number, y:Number, r:Number):void { 
 			// http://board.flashkit.com/board/showthread.php?t=369672
 			g.moveTo(x+r, y); 
@@ -78,15 +86,13 @@
 			g.curveTo(0.4142*r+x,r+y,0.7071*r+x,0.7071*r+y);
 			g.curveTo(r+x,0.4142*r+y,r+x,y);
 		}
-		public function makeShape ():Shape {
-			var shape:Shape = new Shape;
-			var texture:Bitmap = new _BallTexture;
-			var matrix:Matrix = new Matrix;
-			matrix.translate ( -50, -50); matrix.scale (radius / 50, radius / 50);
-			shape.graphics.beginBitmapFill (texture.bitmapData, matrix);
+
+		private function _updateShape ():void {
+			_matrix.identity (); _matrix.translate ( -50, -50); _matrix.scale (radius / 50, radius / 50);
+			shape.graphics.clear ();
+			shape.graphics.beginBitmapFill (_texture.bitmapData, _matrix);
 			_drawCircle (shape.graphics, 0, 0, radius);
 			shape.graphics.endFill ();
-			return shape;
 		}
 		
 	}
