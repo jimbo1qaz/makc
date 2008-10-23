@@ -60,11 +60,10 @@ package {
 
 			ball = new Ball (scene); ball.acceleration.z = -0.1;
 
-			ballSprite = SpriteMaterial.make (ball.makeShape ());
+			ballSprite = SpriteMaterial.make (ball.shape);
 
 			// exclude "sprite" mesh from collision checks
-			ball.collider.collisionSet = new Set;
-			ball.collider.collisionSet.add (ballSprite);
+			var excludeSet:Set = new Set; excludeSet.add (ballSprite); ball.excludeSet = excludeSet;
 
 			resetBall (); scene.root.addChild (ballSprite);
 
@@ -125,9 +124,6 @@ package {
 
 			// random radius
 			ball.radius = 5 + 25 * Math.random ();
-
-			// reset material (with new radius)
-			ballSprite.setMaterialToSurface(new SpriteMaterial (ball.makeShape ()), 0);
 		}
 
 		private function onClick (event:MouseEvent):void {
