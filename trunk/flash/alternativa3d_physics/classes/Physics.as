@@ -3,6 +3,7 @@ package {
 	import alternativa.engine3d.core.Object3D;
 	import alternativa.engine3d.core.Mesh;
 	import alternativa.engine3d.core.Scene3D;
+	import alternativa.engine3d.core.Sprite3D;
 	import alternativa.engine3d.core.Surface;
 	import alternativa.engine3d.core.Vertex;
 	import alternativa.engine3d.display.View;
@@ -37,7 +38,7 @@ package {
 		private var ground:GeoPlane;
 		private var groundSize:Number = 200;
 
-		private var ball:Ball, ballSprite:Mesh;
+		private var ball:Ball, ballSprite:Sprite3D;
 
 		public function Physics() {
 			stage.quality = StageQuality.LOW;
@@ -60,7 +61,7 @@ package {
 
 			ball = new Ball (scene); ball.acceleration.z = -0.1;
 
-			ballSprite = SpriteMaterial.make (ball.shape);
+			ballSprite = new Sprite3D; ballSprite.material = new DisplayObjectMaterial (ball.shape);
 
 			// exclude "sprite" mesh from collision checks
 			var excludeSet:Set = new Set; excludeSet.add (ballSprite); ball.excludeSet = excludeSet;
@@ -102,7 +103,7 @@ package {
 				camera.coords = camCoords; lookAt(ground.coords);
 			}
 			
-			SpriteMaterial.prepare (); scene.calculate ();
+			scene.calculate ();
 
 			// move the ball
 			ball.step (); ballSprite.coords = ball.position;
