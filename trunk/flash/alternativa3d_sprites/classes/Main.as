@@ -106,8 +106,6 @@
 
 		private var t:Number = 0;
 		private function onEnterFrame(e:Event):void {
-			/*// prepare sprites
-			SpriteMaterial.prepare ();*/
 			// orbit and render
 			camera.x = 2 * camera.z * Math.sin (t); camera.y = 2 * camera.z * Math.cos (t); lookAt (box.coords);
 			scene.calculate(); t += 1e-2; if (t > 2 * Math.PI) t -= 2 * Math.PI;
