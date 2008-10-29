@@ -41,9 +41,9 @@
   </includeLibraries>
   <!-- SWC Libraries -->
   <libraryPaths>
-    <element path="library/Alternativa3D.swc" />
-    <element path="library/AlternativaTypes.swc" />
-    <element path="library/AlternativaUtils.swc" />
+    <element path="library\Alternativa3D.swc" />
+    <element path="library\AlternativaTypes.swc" />
+    <element path="library\AlternativaUtils.swc" />
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>
@@ -76,6 +76,6 @@
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="False" />
-    <option testMovie="NewTab" />
+    <option testMovie="ExternalPlayer" />
   </options>
 </project>

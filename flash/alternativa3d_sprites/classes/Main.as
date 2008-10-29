@@ -3,6 +3,7 @@
 	import alternativa.engine3d.core.Mesh;
 	import alternativa.engine3d.core.Object3D;
 	import alternativa.engine3d.core.Scene3D;
+	import alternativa.engine3d.core.Sprite3D;
 	import alternativa.engine3d.display.View;
 	import alternativa.engine3d.materials.TextureMaterial;
 	import alternativa.engine3d.materials.TextureMaterialPrecision;
@@ -84,10 +85,11 @@
 				s.graphics.endFill ();
 
 				// magic happens here :)
-				var mesh:Mesh = SpriteMaterial.make (s);
+				var sprite:Sprite3D = new Sprite3D;
+				sprite.material = new DisplayObjectMaterial (s);
 
-				mesh.x = r * Math.sin (a); mesh.y = r * Math.cos (a); mesh.z = h;
-				scene.root.addChild (mesh);
+				sprite.x = r * Math.sin (a); sprite.y = r * Math.cos (a); sprite.z = h;
+				scene.root.addChild (sprite);
 			}
 
 			FPS.init(stage);
@@ -104,8 +106,8 @@
 
 		private var t:Number = 0;
 		private function onEnterFrame(e:Event):void {
-			// prepare sprites
-			SpriteMaterial.prepare ();
+			/*// prepare sprites
+			SpriteMaterial.prepare ();*/
 			// orbit and render
 			camera.x = 2 * camera.z * Math.sin (t); camera.y = 2 * camera.z * Math.cos (t); lookAt (box.coords);
 			scene.calculate(); t += 1e-2; if (t > 2 * Math.PI) t -= 2 * Math.PI;
