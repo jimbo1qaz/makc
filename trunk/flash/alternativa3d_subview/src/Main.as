@@ -37,7 +37,7 @@
 
 			loader = new Loader3DS;
 			loader.addEventListener (Event.COMPLETE, onLoadingComplete);
-			loader.load ("telias.free.fr/baselight.3ds");
+			loader.load ("saman/h2.3ds");
 
 			onResize (null);
 			stage.addEventListener (Event.RESIZE, onResize);
@@ -71,8 +71,8 @@
 			scene.root.addChild (subView.sprite);
 
 			// place subview sprite when we want it
-			subView.sprite.x = 60 * vi; subView.sprite.y = 60 * vj;
-			subView.sprite.scaleX = subView.sprite.scaleY = subView.sprite.scaleZ = 5;
+			subView.sprite.x = 80 * vi; subView.sprite.y = 80 * vj;
+			subView.sprite.scaleX = subView.sprite.scaleY = subView.sprite.scaleZ = 0.2;
 
 			// remember subview
 			va.push (subView);
