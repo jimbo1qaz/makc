@@ -49,19 +49,19 @@
 			screen.x = 0.5 * (stage.stageWidth - scene.camera.viewport.width);
 			screen.y = 0.5 * (stage.stageHeight - scene.camera.viewport.height);
 
-			d *= 0.8; d += 0.2 * (350 + 200 * stage.mouseY / stage.stageHeight);
+			d = (scene.camera.y - 255 * (0.95 - 0.85 * stage.mouseY / stage.stageHeight));
 			var p:Plane = scene.camera.frustrum.aPlanes [Frustum.BOTTOM];
 			p.a = scene.camera.invModelMatrix.n12;
 			p.b = scene.camera.invModelMatrix.n22;
 			p.c = scene.camera.invModelMatrix.n32;
-			p.d = d; plane.y = 600 - d;
+			p.d = d; plane.y = scene.camera.y - d;
 
 			scene.render ();
 
 			a *= 0.8; a += 0.2 * 2 * Math.PI * stage.mouseX / stage.stageWidth;
 			scene.camera.x = 600 * Math.sin (a);
 			scene.camera.z = 600 * Math.cos (a);
-			scene.camera.y = 600;
+			scene.camera.y = 600 * (1 + Math.sin (a / 2));
 			scene.camera.lookAt (0, 100, 0);
 		}
 	}
