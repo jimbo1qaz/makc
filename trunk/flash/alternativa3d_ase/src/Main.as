@@ -54,8 +54,8 @@
 			camHolder = new Object3D; scene.root.addChild (camHolder);
 			camHolder.addChild (viewLeft.camera); camHolder.addChild (viewRight.camera);
 
-			viewLeft.width  = viewRight.width  = stage.stageWidth;
-			viewLeft.height = viewRight.height = stage.stageHeight;
+			viewLeft.width  = viewRight.width  = 800;
+			viewLeft.height = viewRight.height = 600;
 			viewLeft.camera.z = viewRight.camera.z = -300;
 			addChild (viewLeft); addChild (viewRight);
 
