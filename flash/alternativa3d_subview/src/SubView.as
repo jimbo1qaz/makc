@@ -63,35 +63,21 @@
 			var sourceCam:Camera3D = _mainView.camera;
 			cam.fov = sourceCam.fov;
 
-/*			syncObjects (cam, sourceCam);
-
-			// sync objects
-			syncObjects (_object, sprite);*/
-
-
 			// this sync code assumes rotation + translation only
 
 			var matCam:Matrix3D = sourceCam.transformation;
 			var matObj:Matrix3D = sprite.transformation;
 			matObj.invert (); matCam.combine (matObj);
 
-			var rotationX:Number;
-			var rotationY:Number;
-			var rotationZ:Number;
-
 			var sinY:Number = matCam.i;
-			rotationY = -Math.asin(sinY);
+			cam.rotationY = -Math.asin(sinY);
 			if (-1 < sinY && sinY < 1) {
-				rotationX = Math.atan2(matCam.j, matCam.k);
-				rotationZ = Math.atan2(matCam.e, matCam.a);
+				cam.rotationX = Math.atan2(matCam.j, matCam.k);
+				cam.rotationZ = Math.atan2(matCam.e, matCam.a);
 			} else {
-				rotationX = 0;
-				rotationZ = Math.atan2(-matCam.b, matCam.f);
+				cam.rotationX = 0;
+				cam.rotationZ = Math.atan2(-matCam.b, matCam.f);
 			}
-
-			cam.rotationX = rotationX;
-			cam.rotationY = rotationY;
-			cam.rotationZ = rotationZ;
 
 			cam.x = matCam.d;
 			cam.y = matCam.h;
@@ -101,17 +87,6 @@
 			_scene.calculate ();
 		}
 
-/*		private function syncObjects (obj:Object3D, sourceObj:Object3D):void {
-			obj.rotationX = sourceObj.rotationX;
-			obj.rotationY = sourceObj.rotationY;
-			obj.rotationZ = sourceObj.rotationZ;
-			obj.x = sourceObj.x;
-			obj.y = sourceObj.y;
-			obj.z = sourceObj.z;
-			obj.scaleX = sourceObj.scaleX;
-			obj.scaleY = sourceObj.scaleY;
-			obj.scaleZ = sourceObj.scaleZ;
-		}*/
 	}
 	
 }
