@@ -35,6 +35,9 @@
 			_object = object;
 			_mainView = mainView;
 
+			// free object
+			if (_object.parent != null) _object.parent.removeChild (_object);
+
 			// create empty scene and place our objects in
 			_scene = new Scene3D; _scene.root = new Object3D; _scene.root.addChild (_object);
 			_view = new View; _view.camera = new Camera3D; _scene.root.addChild (_view.camera);
