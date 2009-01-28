@@ -3,7 +3,6 @@
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
 	import flash.geom.Matrix;
-	import org.cove.ape.Vector;
 	import sandy.core.data.Polygon;
 	import sandy.core.Scene3D;
 	import sandy.core.scenegraph.Camera3D;
