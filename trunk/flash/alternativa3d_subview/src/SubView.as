@@ -90,6 +90,14 @@
 			_scene.calculate ();
 		}
 
+		override alternativa3d function clear(skin:Skin):void {
+
+			if (sprite.parent == null)
+				if (skin.contains (_view))
+					skin.removeChild (_view);
+
+			super.clear (skin);
+		}
 	}
 	
 }
