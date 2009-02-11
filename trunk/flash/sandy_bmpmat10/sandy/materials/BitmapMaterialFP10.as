@@ -49,7 +49,7 @@
 			vertices [4] = cx; vertices [5] = cy; uvtData [6] = u2; uvtData [7] = v2; uvtData [8] = focalLength / (focalLength + cz * screenZScale);
 			// render it
 			graphics.lineStyle ();
-			graphics.beginBitmapFill (m_oTexture);
+			graphics.beginBitmapFill (m_oTexture, matrix /* ignored */, repeat, smooth);
 			graphics.drawTriangles (vertices, null, uvtData);
 			graphics.endFill ();
 		}
