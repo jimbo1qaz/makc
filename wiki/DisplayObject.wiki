@@ -2,4 +2,4 @@
 
 = What is DisplayObject =
 
-For some reason Google Code thinks that you might not know what DisplayObject is, and I absolutely have to create DisplayObject wiki page. Well, I have ignored it for some time, but finally gave up, so here it goes: [livedocs.adobe.com/flash/9.0/ActionScriptLangRefV3/flash/display/DisplayObject.html click here to learn everything you need to know about DisplayObject] :)
+For some reason Google Code thinks that you might not know what DisplayObject is, and I absolutely have to create DisplayObject wiki page. Well, I have ignored it for some time, but finally gave up, so here it goes: everything you need to know about [livedocs.adobe.com/flash/9.0/ActionScriptLangRefV3/flash/display/DisplayObject.html DisplayObject] :)
