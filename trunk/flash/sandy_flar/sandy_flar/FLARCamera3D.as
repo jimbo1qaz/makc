@@ -9,12 +9,13 @@
 
 	public class FLARCamera3D extends Camera3D {
 
-		private static const NEAR_CLIP:Number = 50;
-		private static const FAR_CLIP:Number = 10000;
+		public function FLARCamera3D(param:FLARParam, NEAR_CLIP:Number = 50, FAR_CLIP:Number = 10000 ) {
 
-		public function FLARCamera3D(param:FLARParam,
-			p_nWidth:Number = 550, p_nHeight:Number = 400, p_nFov:Number = 45, p_nNear:Number = NEAR_CLIP, p_nFar:Number = FAR_CLIP ) {
-			super ( p_nWidth, p_nHeight, p_nFov, p_nNear, p_nFar );
+			const size:FLARIntSize = param.getScreenSize();
+			const width:int  = size.w;
+			const height:int = size.h;
+
+			super ( size.w, size.h, 45 /* TODO estimate fov */, NEAR_CLIP, FAR_CLIP );
 			this.z = 0;
 
 			var m_projection:Array = new Array(16);
@@ -24,9 +25,6 @@
 			var q:Array = ArrayUtil.createJaggedArray(4, 4);
 			var i:int;
 			var j:int;
-			const size:FLARIntSize = param.getScreenSize();
-			const width:int  = size.w;
-			const height:int = size.h;
 
 			param.getPerspectiveProjectionMatrix().decompMat(icpara_mat, trans_mat);
 
