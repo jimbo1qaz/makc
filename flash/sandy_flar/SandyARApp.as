@@ -33,7 +33,7 @@
 			this._viewport.scaleX = 640 / 320;
 			this._viewport.scaleY = 480 / 240;
 
-			this._camera3d = new FLARCamera3D(this._param, 320, 240);
+			this._camera3d = new FLARCamera3D(this._param);
 
 			this._scene = new Scene3D ("s", this._viewport, this._camera3d, new Group);
 			this._baseNode = new FLARBaseNode(); this._scene.root.addChild (this._baseNode);
@@ -50,7 +50,6 @@
 			} else {
 				this._baseNode.visible = false;
 			}
-			this._baseNode.changed = true; // just in case...
 			this._scene.render();
 		}
 	}
