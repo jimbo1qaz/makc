@@ -1,4 +1,5 @@
-// http://wonderfl.kayac.com/code/1ee53bd0cff107d44c831a36b92502e90734b0ec
+// http://wonderfl.kayac.com/code/79ddd9ff04d65d41658443ea513091d54cbdea51
+// forked from 3D Pythagoras tree - anaglyph version
 
 // Three-dimensional Pythagoras tree
 // First implementation ever, to my best knowledge :)
@@ -10,15 +11,19 @@ package {
 
 	import flash.display.*
 	import flash.events.*
+	import flash.geom.ColorTransform;
 
+	import alternativa.engine3d.*
 	import alternativa.engine3d.controllers.*
 	import alternativa.engine3d.core.*
 	import alternativa.engine3d.display.*
 	import alternativa.engine3d.materials.*
 	import alternativa.engine3d.primitives.*
 	import alternativa.types.*
-     
-	[SWF(width=465,height=465,frameRate=30)]
+
+	use namespace alternativa3d;
+
+	[SWF(width=465,height=465,frameRate=30,backgroundColor=0)]
 	public class PythagorasTree3D extends Sprite {
 
 		// tree elements (center positions, left and up vectors)
@@ -107,7 +112,17 @@ package {
 
 		private var planes:Array = [], planesDone:Array = [];
 		private function step ():void {
-			var pD:Plane = Plane (planes.shift ()); planesDone.push (pD);
+			var pD:Plane = Plane (planes.shift ());
+			if (pD == null) return;
+
+			planesDone.push (pD);
+
+			var scale:Number =
+				pD.transformation.a * pD.transformation.a +
+				pD.transformation.e * pD.transformation.e +
+				pD.transformation.i * pD.transformation.i;
+			if (scale < 0.005) return;
+
 
 			var pA:Plane = createPlane ();
 			pA.rotationX = rA.x;  pA.rotationY = rA.y;  pA.rotationZ = rA.z;
@@ -152,22 +167,40 @@ package {
 
 		private function createPlane ():Plane {
 			var p:Plane = new Plane (2, 2);
-			p.cloneMaterialToAllSurfaces (new FillMaterial (0xFFFFFF * Math.random ()));
+			p.cloneMaterialToAllSurfaces (new FillMaterial (0xFFFFFF, 0.5));
 			return p;
+		}
+
+		private function lightPlane (p:Plane):void {
+			var face:Face = p.faces.peek () as Face;
+			var dot:Number = face.globalNormal.x + face.globalNormal.y - face.globalNormal.z;
+			if (dot < 0) dot = 0; if (dot > 1) dot = 1;
+			var lum:Number = 0.6 + 0.4 * dot;
+			var color:uint = 0x10101 * int (255 * lum);
+			var mat1:FillMaterial = FillMaterial (Surface (p.surfaces ["front"]).material); mat1.color = color;
+			var mat2:FillMaterial = FillMaterial (Surface (p.surfaces ["back"]).material); mat2.color = color;
 		}
 
 		private var scene:Scene3D;
 		private var tripod:Object3D;
-		private var view:View;
+		private var viewL:View;
+		private var viewR:View;
 
 		public function PythagorasTree3D () {
 			scene = new Scene3D; scene.root = new Object3D;
-			view = new View; view.camera = new Camera3D;
-			view.camera.z = -6; view.camera.rotationX = -0.4; view.camera.y = -6;
-			tripod = new Object3D; scene.root.addChild (tripod); tripod.addChild (view.camera);
-			view.width = view.height = 465; addChild (view);
+			viewL = new View; viewL.camera = new Camera3D;
+			viewL.camera.z = -6; viewL.camera.rotationX = -0.6; viewL.camera.y = -9;
+			tripod = new Object3D; scene.root.addChild (tripod); tripod.addChild (viewL.camera);
+			viewL.width = 500; viewL.height = 465; addChild (viewL); viewL.x = -30;
+			viewL.transform.colorTransform = new ColorTransform (1, 0, 0);
 
-			regenerate (0.5, 0.6);
+			viewR = new View; viewR.camera = new Camera3D;
+			viewR.camera.x = 0.8; viewL.camera.addChild (viewR.camera);
+			viewR.width = 500; viewR.height = 465; addChild (viewR);
+			viewR.transform.colorTransform = new ColorTransform (0, 0.9, 1);
+			viewR.blendMode = "add";
+
+			regenerate (0.1, 0.2);
 
 			var s:Sprite = new Sprite; s.buttonMode = s.useHandCursor = true;
 			s.graphics.beginFill (0, 0); s.graphics.drawRect (0, 0, 465, 465);
@@ -181,8 +214,13 @@ package {
 		}
 
 		private function onEnterFrame (e:Event):void {
-			if (planesDone.length < 50) step ();
-			tripod.rotationY += 0.1; scene.calculate ();
+			// add 3 more planes
+			var grow:Boolean = (planesDone.length < 2000);
+			if (grow) step (); scene.calculate ();
+			// apply lighting after global normals were set
+			if (grow)
+			for (var i:int = Math.max (0, planes.length - 3); i < planes.length; i++)
+				lightPlane (planes [i]);
 		}
 	}
 }
