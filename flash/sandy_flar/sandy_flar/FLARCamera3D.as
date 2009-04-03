@@ -15,7 +15,7 @@
 			const width:int  = size.w;
 			const height:int = size.h;
 
-			super ( size.w, size.h, 45 /* TODO estimate fov */, NEAR_CLIP, FAR_CLIP );
+			super ( size.w, size.h, 0 /* anything */, 2 /* TODO find why 2 */ * NEAR_CLIP, FAR_CLIP );
 			this.z = 0;
 
 			var m_projection:Array = new Array(16);
@@ -85,6 +85,11 @@
 			mp21 = args[4];  mp22 = args[5];  mp23 = args[6];  mp24 = args[7];
 			mp31 = args[8];  mp32 = args[9];  mp33 = args[10]; mp34 = args[11];
 			mp41 = args[12]; mp42 = args[13]; mp43 = args[14]; mp44 = args[15];
+
+			//trace ("approximate sandy fov " + fov);
+			//trace ("approximate sandy focal length " + focalLength);
+			//trace ("approximate sandy near " + near + " vs exact " + (2 * NEAR_CLIP));
+			//trace ("approximate sandy far " + far + " vs exact " + FAR_CLIP);
 		}
 
 		override public function projectArray( p_oList:Array ):void
@@ -137,5 +142,18 @@
 				mp31, mp32, mp33, mp34,
 				mp41, mp42, mp43, mp44 );
 		}
+
+		// getters for approximate values
+		override public function set fov( p_nFov:Number ):void {}
+		override public function get fov():Number { return Math.atan (1 / mp22) * 114.591559 /* 2 * 180 / Math.PI */; }
+
+		override public function set focalLength( f:Number ):void {}
+		override public function get focalLength():Number { return viewport.height2 / Math.tan (fov * 0.00872664626 /* 1 / 2 * (Math.PI / 180) */ ); }
+
+		override public function set near( pNear:Number ):void {}
+		override public function get near():Number { return -mp34 / mp33; }
+
+		override public function set far( pFar:Number ):void {}
+		override public function get far():Number { return near * mp33 / (mp33 - 1); }
 	}
 }
