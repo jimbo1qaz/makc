@@ -73,11 +73,12 @@
 			matObj.invert (); matCam.combine (matObj);
 
 			var sinY:Number = matCam.i;
-			cam.rotationY = -Math.asin(sinY);
 			if (-1 < sinY && sinY < 1) {
+				cam.rotationY = -Math.asin(sinY);
 				cam.rotationX = Math.atan2(matCam.j, matCam.k);
 				cam.rotationZ = Math.atan2(matCam.e, matCam.a);
 			} else {
+				cam.rotationY = (sinY > 0) ? -Math.PI / 2 : Math.PI / 2;
 				cam.rotationX = 0;
 				cam.rotationZ = Math.atan2(-matCam.b, matCam.f);
 			}
