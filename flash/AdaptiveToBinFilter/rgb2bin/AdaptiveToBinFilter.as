@@ -125,7 +125,7 @@ package rgb2bin {
 
 			if (standardOperation) {
 				// so that we can switch on-the-fly in test runs
-				outbmp.threshold(this._tmp, searchArea, ONE_POINT, '<=', this._threshold, 0xffffffff, 0xff);
+				outbmp.threshold(this._tmp, searchArea, searchArea.topLeft, '<=', this._threshold, 0xffffffff, 0xff);
 			} else {
 				// adapt threshold to local average value
 				outbmp.copyPixels (this._tmp, searchArea, searchArea.topLeft);
