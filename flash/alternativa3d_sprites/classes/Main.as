@@ -64,7 +64,7 @@
 
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
-			stage.quality = StageQuality.LOW;
+			stage.quality = StageQuality.HIGH;
 
 			scene = new Scene3D(); scene.root = new Object3D(); scene.root.addChild(box);
 			camera = new Camera3D(); camera.z = 200; scene.root.addChild(camera);
