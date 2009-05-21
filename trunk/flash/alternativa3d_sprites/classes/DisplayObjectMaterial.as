@@ -11,8 +11,17 @@
 	public class DisplayObjectMaterial extends SpriteMaterial
 	{
 		private var _dobj:DisplayObject;
+
+		public function get dobj ():DisplayObject { return _dobj; }
+		public function set dobj (v:DisplayObject):void {
+			// remove from skin 1st
+			if (_dobj != null)
+				if (_dobj.parent != null)
+					_dobj.parent.removeChild (_dobj);
+			_dobj = v;
+		}
 		
-		public function DisplayObjectMaterial (displayObject:DisplayObject, alpha:Number = 1, blendMode:String = "normal") {
+		public function DisplayObjectMaterial (displayObject:DisplayObject = null, alpha:Number = 1, blendMode:String = "normal") {
 			super (alpha, blendMode); _dobj = displayObject;
 		}
 
@@ -26,7 +35,7 @@
 			_pt = camera.globalToLocal (sprite.globalCoords);
 
 			// in front of camera only, please
-			return (0 < _pt.z);
+			_dobj.visible = (0 < _pt.z); return _dobj.visible;
 		}
 
 		override alternativa3d function draw (camera:Camera3D, skin:Skin):void {
@@ -35,8 +44,8 @@
 			skin.alpha = _alpha;
 			skin.blendMode = _blendMode;
 
-			// if _dobj is not in skin yet, add it... but how the hell we remove it ??
-			if (!skin.contains (_dobj)) {
+			// if _dobj is not in skin yet, add it
+			if (skin != _dobj.parent) {
 				skin.addChild (_dobj);
 			}
 
