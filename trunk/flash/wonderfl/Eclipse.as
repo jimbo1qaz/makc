@@ -1,4 +1,4 @@
-http://wonderfl.kayac.com/code/904e3f88085334894ad6d57cf03f4abd0d3139f1
+// http://wonderfl.kayac.com/code/904e3f88085334894ad6d57cf03f4abd0d3139f1
 package {
     import flash.display.*;
     import flash.geom.*;
