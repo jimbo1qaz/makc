@@ -52,16 +52,6 @@
 			box = new Box (200, 200, 200);
 			box.cloneMaterialToAllSurfaces (tex);
 
-			// load logo.png
-			var loader:Loader = new Loader ();
-			loader.contentLoaderInfo.addEventListener (Event.INIT, initHandler2);
-			loader.load (new URLRequest ("logo.png"));
-		}
-
-		private function initHandler2 (event:Event):void
-		{
-			var info:LoaderInfo = LoaderInfo (event.target);
-
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
 			stage.quality = StageQuality.HIGH;
@@ -70,23 +60,20 @@
 			camera = new Camera3D(); camera.z = 200; scene.root.addChild(camera);
 			view = new View(); addChild(view); view.camera = camera;
 
-			var b:BitmapData = Bitmap (info.content).bitmapData;
-			var m:Matrix = new Matrix (1, 0, 0, 1, -b.width/2, -b.height/2);
-
 			for (var i:int = 0; i < 20; i++)
 			{
 				var r:Number = 200 + 100 * Math.random ();
 				var a:Number = 2 * Math.PI * Math.random ();
 				var h:Number = 100 - 200 * Math.random ();
 
-				var s:Sprite = new Sprite;
-				s.graphics.beginBitmapFill (b, m);
-				s.graphics.drawRect (m.tx, m.ty, b.width, b.height);
-				s.graphics.endFill ();
+				// load logo.png
+				var loader:Loader = new Loader ();
+				loader.contentLoaderInfo.addEventListener (Event.INIT, initHandler2);
+				loader.load (new URLRequest ("logo.png"));
 
 				// magic happens here :)
 				var sprite:Sprite3D = new Sprite3D;
-				sprite.material = new DisplayObjectMaterial (s);
+				sprite.material = new DisplayObjectMaterial (loader);
 
 				sprite.x = r * Math.sin (a); sprite.y = r * Math.cos (a); sprite.z = h;
 				scene.root.addChild (sprite);
@@ -97,6 +84,12 @@
 			stage.addEventListener(Event.RESIZE, onResize);
 			stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 			onResize(null);
+		}
+
+		private function initHandler2 (event:Event):void {
+			var info:LoaderInfo = LoaderInfo (event.target);
+			info.loader.x = -info.loader.width / 2;
+			info.loader.y = -info.loader.height / 2;
 		}
 
 		private function onResize(e:Event):void {
