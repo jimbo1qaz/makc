@@ -16,6 +16,8 @@
 	import flash.display.StageQuality;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
+	import flash.events.KeyboardEvent;
+	import flash.events.MouseEvent;
 	
 	/**
 	* Dynamic BSP performance test.
@@ -77,11 +79,19 @@
 			}
 
 			addEventListener (Event.ENTER_FRAME, loop);
+			stage.addEventListener (KeyboardEvent.KEY_UP, enter);
+		}
+
+		private var animation:Boolean;
+		private function enter (e:KeyboardEvent):void {
+			if (e.keyCode == 13) animation = !animation;
 		}
 
 		private function loop (e:Event):void {
-			cubesA.rotationZ += 0.01;
-			cubesB.rotationZ -= 0.01;
+			if (animation) {
+				cubesA.rotationZ += 0.01;
+				cubesB.rotationZ -= 0.01;
+			}
 
 			controller.processInput ();
 			scene.calculate ();
