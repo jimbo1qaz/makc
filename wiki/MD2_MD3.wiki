@@ -8,6 +8,7 @@ MD2 is Quake II animated mesh file format. MD2 file simply contains N named anim
   * [http://tfc.duke.free.fr/old/models/md2.htm Format description] (and C++ code)
   * [http://project3d.home.sapo.pt/md2_tutorial.html 3DMax tutorial] (free import/export scripts included)
   * [http://www.qtipplugin.com/index.htm 3DMax export plugin] (commercial)
+  * [http://www.misfitcode.com/misfitmodel3d/ Misfit Model 3D] (free editor that saves to MD2)
 
 Free MD2 models:
   [http://www.md2.sitters-electronics.nl/index.html md2.sitters-electronics.nl] | [http://polycount.com/models/quake2/ polycount.com] | [http://telias.free.fr/models_md2_menu.html telias.free.fr] | [http://archive.doomsdayhq.com/files.php?type=6 archive.doomsdayhq.com]
