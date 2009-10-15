@@ -45,7 +45,7 @@
 			oscillators = [];
 			// 1 to 9 Hz, 10 Hz is too close to Nyquist limit, 0.5 * (44100 / 2048) = 10.77 Hz
 			for (var w:int = 1; w <= 9; w++)
-				oscillators.push (new Oscillator (w, Oscillator.CalculateDamping (w, 0.2), 2048 / 44100));
+				oscillators.push (new Oscillator (w, Oscillator.CalculateDamping (w, 0.1), 2048 / 44100));
 			setInterval (updateOscillators, 2048 * 1000 / 44100);
 
 			addEventListener (Event.ENTER_FRAME, enterFrameHandler);
