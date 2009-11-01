@@ -11,6 +11,7 @@
 	import flash.events.IOErrorEvent;
 	import flash.events.MouseEvent;
 	import flash.filters.DropShadowFilter;
+	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.net.FileReference;
 	import flash.text.TextField;
@@ -36,7 +37,7 @@
 	 * @license GPLv2
 	 * @author makc
 	 */
-	[SWF (width="560", height="240")]
+	[SWF (width="800", height="240")]
 	public class PoC extends Sprite {
 		
 		public function PoC () {
@@ -79,6 +80,9 @@
 			qrInfo = new TextField; qrInfo.filters = [ new DropShadowFilter (0, 0, 0, 1, 3, 3, 10) ];
 			qrInfo.x = 320; qrInfo.textColor = 0xFF00; qrInfo.autoSize = "left";
 			addChild (qrInfo);
+
+			qrResult = homography.clone ();
+			var rbmp:Bitmap = new Bitmap (qrResult); rbmp.x = 560; addChild (rbmp);
 
 			// show time
 			process ();
@@ -215,11 +219,17 @@
 
 				// now read QR code
 				qrInfo.text = "";
+				qrResult.fillRect (qrResult.rect, 0);
 				qrImage.process ();
 			}
 		}
 
-		private function onQRCodeRead (e:QRreaderEvent):void { qrDecoder.setQR (e.data); qrDecoder.startDecode (); }
+		private function onQRCodeRead (e:QRreaderEvent):void {
+			// you don't have to draw qrResult, it's for debug ;)
+			qrResult.draw (e.imageData, new Matrix (240 / e.imageData.width, 0, 0, 240 / e.imageData.height));
+
+			qrDecoder.setQR (e.data); qrDecoder.startDecode ();
+		}
 		private function onQRDecoded (e:QRdecoderEvent):void {
 			qrInfo.text = "QR: " + e.data;
 
@@ -251,6 +261,7 @@
 
 		private var qrImage:GetQRimage;
 		private var qrDecoder:QRdecode;
+		private var qrResult:BitmapData;
 
 		private var qrInfo:TextField;
 	}
