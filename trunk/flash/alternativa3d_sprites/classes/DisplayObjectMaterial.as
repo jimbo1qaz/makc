@@ -16,7 +16,7 @@
 		public function set dobj (v:DisplayObject):void {
 			// remove from skin 1st
 			if (_dobj != null)
-				if (_dobj.parent != null)
+				if (_dobj.parent as Skin != null)
 					_dobj.parent.removeChild (_dobj);
 			_dobj = v;
 		}
@@ -25,7 +25,7 @@
 			super (alpha, blendMode); _dobj = displayObject;
 		}
 
-		private var _pt:Point3D;
+		private var _pt:Point3D, _s:Point3D = new Point3D;
 
 		// TODO handle clipping?
 		override alternativa3d function canDraw (camera:Camera3D):Boolean {
@@ -49,10 +49,15 @@
 				skin.addChild (_dobj);
 			}
 
+			// account for scale
+			_s.x = sprite.scaleX;
+			_s.y = sprite.scaleY;
+			_s.z = sprite.scaleZ;
+
 			// place it accordingly
 			var zoom:Number = camera.orthographic ? 1 : camera.focalLength / _pt.z;
-			_dobj.x = _pt.x * zoom; _dobj.scaleX = zoom;
-			_dobj.y = _pt.y * zoom; _dobj.scaleY = zoom;
+			_dobj.x = _pt.x * zoom; _dobj.scaleX = zoom * _s.length;
+			_dobj.y = _pt.y * zoom; _dobj.scaleY = zoom * _s.length;
 		}
 
 	}
