@@ -53,6 +53,7 @@
 			_s.x = sprite.scaleX;
 			_s.y = sprite.scaleY;
 			_s.z = sprite.scaleZ;
+			_s.multiply (0.5773502691896257645 /*1 / Math.sqrt (3)*/);
 
 			// place it accordingly
 			var zoom:Number = camera.orthographic ? 1 : camera.focalLength / _pt.z;
