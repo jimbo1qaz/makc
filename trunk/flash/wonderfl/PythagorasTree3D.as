@@ -1,4 +1,3 @@
-// http://wonderfl.kayac.com/code/79ddd9ff04d65d41658443ea513091d54cbdea51
 // forked from 3D Pythagoras tree - anaglyph version
 
 // Three-dimensional Pythagoras tree
@@ -42,7 +41,7 @@ package {
 			// using c1 and c2 in 0..1 range, select such a, b, c and d that a^2 + b^2 + c^2 = d^2
 			// this choise is almost completely free (we only need to make sure that d != 0)
 			var a:Number = 0.1 + c1, c:Number = 1.1 - c1; // +
-			var b:Number = ((c2 > 0.5) ? (c2 - 0.49) : (c2 - 0.51)) * 2; // + or -
+			var b:Number = ((c2 > 0.5) ? (c2 - 0.499999) : (c2 - 0.500001)) * 2; // + or -
 			var d:Number = Math.sqrt (a * a + b * b + c * c); // +
 
 			// define corresponding tree elements in some convenient frame
@@ -121,7 +120,7 @@ package {
 				pD.transformation.a * pD.transformation.a +
 				pD.transformation.e * pD.transformation.e +
 				pD.transformation.i * pD.transformation.i;
-			if (scale < 0.005) return;
+			if (scale < 0.001) return;
 
 
 			var pA:Plane = createPlane ();
@@ -155,6 +154,10 @@ package {
 
 			// do the math
 			calculateElements (c1, c2);
+
+			// mark location
+			loc.x = stage.stageWidth * c1;
+			loc.y = stage.stageHeight * c2;
 		}
 
 		private function destroyPlane (p:Plane):void {
@@ -167,16 +170,35 @@ package {
 
 		private function createPlane ():Plane {
 			var p:Plane = new Plane (2, 2);
-			p.cloneMaterialToAllSurfaces (new FillMaterial (0xFFFFFF, 0.5));
+			p.cloneMaterialToAllSurfaces (new FillMaterial (0x00FF));
 			return p;
+		}
+
+		private function interpolateColor (fromColor:uint, toColor:uint, progress:Number):uint {
+			var q:Number = 1-progress;
+			var fromR:uint = (fromColor >> 16) & 0xFF;
+			var fromG:uint = (fromColor >>  8) & 0xFF;
+			var fromB:uint =  fromColor        & 0xFF;
+			var toR:uint = (toColor >> 16) & 0xFF;
+			var toG:uint = (toColor >>  8) & 0xFF;
+			var toB:uint =  toColor        & 0xFF;
+			var resultR:uint = fromR*q + toR*progress;
+			var resultG:uint = fromG*q + toG*progress;
+			var resultB:uint = fromB*q + toB*progress;
+			var resultColor:uint = resultR << 16 | resultG << 8 | resultB;
+			return resultColor;
 		}
 
 		private function lightPlane (p:Plane):void {
 			var face:Face = p.faces.peek () as Face;
-			var dot:Number = face.globalNormal.x + face.globalNormal.y - face.globalNormal.z;
-			if (dot < 0) dot = 0; if (dot > 1) dot = 1;
-			var lum:Number = 0.6 + 0.4 * dot;
-			var color:uint = 0x10101 * int (255 * lum);
+			var dot:Number = (face.globalNormal.x + face.globalNormal.y - face.globalNormal.z) / Math.sqrt (3);
+			if (dot < -1) dot = -1; if (dot > 1) dot = 1;
+			var lum:Number = 0.6 + 0.4 * Math.abs (dot);
+			var color1:uint = 0x40302 * int (63 * lum); // yellow-ish
+			var color2:uint = 0x20400 * int (63 * lum); // green-ish
+			var m:Matrix3D = p.transformation;
+			var prog:Number = Math.sqrt (m.a * m.a + m.e * m.e + m.i * m.i);
+			var color:uint = interpolateColor (color2, color1, prog);
 			var mat1:FillMaterial = FillMaterial (Surface (p.surfaces ["front"]).material); mat1.color = color;
 			var mat2:FillMaterial = FillMaterial (Surface (p.surfaces ["back"]).material); mat2.color = color;
 		}
@@ -185,13 +207,16 @@ package {
 		private var tripod:Object3D;
 		private var viewL:View;
 		private var viewR:View;
+		private var loc:Shape;
 
 		public function PythagorasTree3D () {
+			stage.quality = "best";
+
 			scene = new Scene3D; scene.root = new Object3D;
 			viewL = new View; viewL.camera = new Camera3D;
 			viewL.camera.z = -6; viewL.camera.rotationX = -0.6; viewL.camera.y = -9;
 			tripod = new Object3D; scene.root.addChild (tripod); tripod.addChild (viewL.camera);
-			viewL.width = 500; viewL.height = 465; addChild (viewL); viewL.x = -30;
+			viewL.width = 500; viewL.height = 465; addChild (viewL); viewL.x = -26;
 			viewL.transform.colorTransform = new ColorTransform (1, 0, 0);
 
 			viewR = new View; viewR.camera = new Camera3D;
@@ -200,27 +225,46 @@ package {
 			viewR.transform.colorTransform = new ColorTransform (0, 0.9, 1);
 			viewR.blendMode = "add";
 
-			regenerate (0.1, 0.2);
-
 			var s:Sprite = new Sprite; s.buttonMode = s.useHandCursor = true;
 			s.graphics.beginFill (0, 0); s.graphics.drawRect (0, 0, 465, 465);
 			addChild (s); s.addEventListener (MouseEvent.CLICK, onClick);
 
 			addEventListener (Event.ENTER_FRAME, onEnterFrame);
+
+			loc = new Shape;
+			loc.graphics.lineStyle ();
+			loc.graphics.beginFill (0xFFFFFF);
+			loc.graphics.drawCircle (0, 0, 2);
+			addChild (loc); loc.addEventListener (MouseEvent.CLICK, onClick);
+
+			regenerate (0.5, 0.5);
 		}
 
 		private function onClick (e:MouseEvent):void {
-			regenerate (mouseX / 465.0, mouseY / 465.0);
+			regenerate (mouseX / stage.stageWidth, mouseY / stage.stageHeight);
+			if (e.shiftKey)
+				trace ("\t\t\tnew Point ("
+				+ (mouseX / stage.stageWidth).toFixed (5)
+				+ ", "
+				+ (mouseY / stage.stageHeight).toFixed (5)
+				+ "),");
 		}
 
 		private function onEnterFrame (e:Event):void {
 			// add 3 more planes
-			var grow:Boolean = (planesDone.length < 2000);
-			if (grow) step (); scene.calculate ();
+			var lastPlaneDone:int = planesDone.length;
+			var grow:Boolean = (planesDone.length < 15000);
+			if (grow) {
+				for (var s:int = 0; s < 90; s++) step ();
+			}
+			scene.calculate ();
 			// apply lighting after global normals were set
-			if (grow)
-			for (var i:int = Math.max (0, planes.length - 3); i < planes.length; i++)
-				lightPlane (planes [i]);
+			if (grow || (lastPlaneDone < planesDone.length)) {
+				for (var p:int = lastPlaneDone; p < planesDone.length; p++)
+					lightPlane (planesDone [p]);
+				for (var i:int = Math.max (0, planes.length - 9*3); i < planes.length; i++)
+					lightPlane (planes [i]);
+			}
 		}
 	}
 }
