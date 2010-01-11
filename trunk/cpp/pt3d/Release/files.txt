@@ -1,0 +1,3 @@
+Get ffmpeg from http://ffmpeg.arrozcru.org/builds/shared/ffmpeg-r16537-gpl-lshared-win32.tar.bz2
+Unrar flashlog.txt example
+Run pt3d.exe [video file name]
