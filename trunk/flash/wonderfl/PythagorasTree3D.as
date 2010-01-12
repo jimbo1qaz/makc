@@ -238,6 +238,8 @@ package {
 			addChild (loc); loc.addEventListener (MouseEvent.CLICK, onClick);
 
 			regenerate (0.5, 0.5);
+
+			stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
 		}
 
 		private function onClick (e:MouseEvent):void {
@@ -265,6 +267,80 @@ package {
 				for (var i:int = Math.max (0, planes.length - 9*3); i < planes.length; i++)
 					lightPlane (planes [i]);
 			}
+		}
+
+		private var dae:XML =
+		<COLLADA version="1.4.0" xmlns="http://www.collada.org/2005/11/COLLADASchema">
+			<asset>
+				<unit meter="0.01" name="centimeter"/>
+				<up_axis>Z_UP</up_axis>
+			</asset>
+			<library_geometries>
+				<geometry id="Plane-Geometry" name="Plane-Geometry">
+					<mesh>
+						<source id="Plane-Geometry-Position">
+							<float_array count="36" id="Plane-Geometry-Position-array">1.00000 1.00000 0.00000 1.00000 -1.00000 0.00000 -1.00000 -1.00000 0.00000 -1.00000 1.00000 0.00000</float_array>
+							<technique_common>
+								<accessor count="4" source="#Plane-Geometry-Position-array" stride="3">
+									<param type="float" name="X"></param>
+									<param type="float" name="Y"></param>
+									<param type="float" name="Z"></param>
+								</accessor>
+							</technique_common>
+						</source>
+						<source id="Plane-Geometry-Normals">
+							<float_array count="3" id="Plane-Geometry-Normals-array">0.00000 0.00000 1.00000</float_array>
+							<technique_common>
+								<accessor count="1" source="#Plane-Geometry-Normals-array" stride="3">
+									<param type="float" name="X"></param>
+									<param type="float" name="Y"></param>
+									<param type="float" name="Z"></param>
+								</accessor>
+							</technique_common>
+						</source>
+						<vertices id="Plane-Geometry-Vertex">
+							<input semantic="POSITION" source="#Plane-Geometry-Position"/>
+						</vertices>
+						<polygons count="1">
+							<input offset="0" semantic="VERTEX" source="#Plane-Geometry-Vertex"/>
+							<input offset="1" semantic="NORMAL" source="#Plane-Geometry-Normals"/>
+							<p>0 0 1 0 2 0 3 0</p>
+						</polygons>
+					</mesh>
+				</geometry>
+			</library_geometries>
+			<library_visual_scenes>
+				<visual_scene id="Scene" name="Scene" />
+			</library_visual_scenes>
+			<scene>
+				<instance_visual_scene url="#Scene"/>
+			</scene>
+		</COLLADA>;
+
+		private function onKeyUp (e:KeyboardEvent):void {
+			// export collada 1.4
+			var scene:XML = <visual_scene id="Scene" name="Scene" />;
+			for (var i:int = 0; i < planesDone.length; i++) {
+				var pi:Plane = Plane (planesDone [i]);
+				var mi:Matrix3D = pi.transformation;
+				var ni:XML = new XML (
+				"<node layer=\"L1\" id=\"Plane" + i + "\" name=\"Plane" + i + "\">" +
+					"<matrix>" +
+						mi.a + " " + mi.b + " " + mi.c + " " + mi.d + " " +
+						mi.e + " " + mi.f + " " + mi.g + " " + mi.h + " " +
+						mi.i + " " + mi.j + " " + mi.k + " " + mi.l + " " +
+						"0.0 0.0 0.0 1.0" +
+					"</matrix>" +
+					"<instance_geometry url=\"#Plane-Geometry\"/>" +
+				"</node>"
+				);
+				scene.appendChild (ni);
+			}
+
+			// dump to flash log
+			dae.children() [2].setChildren (scene);
+			trace ("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+			trace (dae.toString ());
 		}
 	}
 }
