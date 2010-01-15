@@ -3,6 +3,7 @@
 #include <atlbase.h> // CComBSTR (also helps gdiplus.h to compile :)
 #include <gdiplus.h> // (add gdiplus.lib)
 
+#include <stdio.h>
 #include <sys/stat.h>
 
 bool FileExists(char *filename) { 
