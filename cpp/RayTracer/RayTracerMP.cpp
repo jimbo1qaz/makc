@@ -187,6 +187,50 @@ bool hitTest (double x, double y, double z) {
 	return true;
 }
 
+double approxDistance (double x, double y, double z) {
+	x += 0.5;
+	y += 0.5;
+	z += 0.5;
+	int iterations = 7;
+	double d = -1;
+	if (x < 0) if ((d < 0)||(-x < d)) d = -x;
+	if (x > 1) if ((d < 0)||(x-1 < d)) d = x-1;
+	if (y < 0) if ((d < 0)||(-y < d)) d = -y;
+	if (y > 1) if ((d < 0)||(y-1 < d)) d = y-1;
+	if (z < 0) if ((d < 0)||(-z < d)) d = -z;
+	if (z > 1) if ((d < 0)||(z-1 < d)) d = z-1;
+	if (d > 0) return d;
+
+	double p = 3;
+	for (int m = 1; m < iterations; m++) {
+		double xa = fmod (x*p, 3);
+		double ya = fmod (y*p, 3);
+		double za = fmod (z*p, 3);
+		d = -1;
+		if ((xa > 1.0) && (xa < 2.0)   &&   (ya > 1.0) && (ya < 2.0)) {
+			if ((d < 0)||(xa-1 < d)) d = xa-1;
+			if ((d < 0)||(2-xa < d)) d = 2-xa;
+			if ((d < 0)||(ya-1 < d)) d = ya-1;
+			if ((d < 0)||(2-ya < d)) d = 2-ya;
+		}
+		if ((za > 1.0) && (za < 2.0)   &&   (ya > 1.0) && (ya < 2.0)) {
+			if ((d < 0)||(za-1 < d)) d = za-1;
+			if ((d < 0)||(2-za < d)) d = 2-za;
+			if ((d < 0)||(ya-1 < d)) d = ya-1;
+			if ((d < 0)||(2-ya < d)) d = 2-ya;
+		}
+		if ((xa > 1.0) && (xa < 2.0)   &&   (za > 1.0) && (za < 2.0)) {
+			if ((d < 0)||(xa-1 < d)) d = xa-1;
+			if ((d < 0)||(2-xa < d)) d = 2-xa;
+			if ((d < 0)||(za-1 < d)) d = za-1;
+			if ((d < 0)||(2-za < d)) d = 2-za;
+		}
+		if (d > 0) return d / p;
+		p *= 3;
+	}
+	return 0;
+}
+
 int main(int argc, char* argv[])
 {
 	srand ((unsigned int) time (NULL));
@@ -302,6 +346,10 @@ int main(int argc, char* argv[])
 		camSideX = -0.680132;
 		camSideY = -0.665267;
 		camSideZ = 0.307961;
+
+		/*camPosX -= 0.02 * camUpX;
+		camPosY -= 0.02 * camUpY;
+		camPosZ -= 0.02 * camUpZ;*/
 	}
 
 	// render several times
@@ -349,8 +397,11 @@ int main(int argc, char* argv[])
 				// process one ray
 				Ray &r = rays [beginAt];
 
-				double step = steps [lastStep];
-				lastStep++; lastStep %= STEP_N;
+				double step = approxDistance (r.x, r.y, r.z);
+				if (step < STEP) {
+					step = steps [lastStep];
+					lastStep++; lastStep %= STEP_N;
+				}
 				r.x += r.dx * step; r.y += r.dy * step; r.z += r.dz * step;
 
 				if (hitTest (r.x, r.y, r.z)) {
@@ -380,7 +431,7 @@ int main(int argc, char* argv[])
 					if (beginAt % 12345 == 0) printf ("\rPass %d ray %d generation %d pool at %d        ", pass, beginAt - 1, r.generation, newRaysAt);
 				} else {
 					double d2 = r.x * r.x + r.y * r.y + r.z * r.z;
-					if (d2 > 1.1) {
+					if (d2 > 3.1415) {
 						// we hit light - get color from lightmap
 						// this SHOULD be determined by the way lightmap is made ;)
 						d2 = 1 / sqrt (d2); r.x *= d2; r.y *= d2; r.z *= d2;
@@ -410,7 +461,7 @@ int main(int argc, char* argv[])
 		
 		for (s = 0; s < SS; s++) {
 			// ugly hack for sky :(
-			double ns = (num [s] > 1) ? /* body */ sum : /* sky: */ 1;
+			double ns = (num [s] > 1) ? /* body */ 0.4*sum : /* sky: */ 1;
 			int ir = int (red   [s] / ns); if (ir > 255) ir = 255;
 			int ig = int (green [s] / ns); if (ig > 255) ig = 255;
 			int ib = int (blue  [s] / ns); if (ib > 255) ib = 255;
