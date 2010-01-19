@@ -170,17 +170,23 @@ bool hitTest (double x, double y, double z) {
 	x += 0.5;
 	y += 0.5;
 	z += 0.5;
+	// pick w at any hyperplane crossing unit hypercube
+	double w = 1.5 +x -y -z;
 	int iterations = 7;
-	if ((x<0)||(x>1)||(y<0)||(y>1)||(z<0)||(z>1)) return false;
+	if ((x<0)||(x>1)||(y<0)||(y>1)||(z<0)||(z>1)||(w<0)||(w>1)) return false;
 	double p = 3;
 	for (int m = 1; m < iterations; m++) {
 		double xa = fmod (x*p, 3);
 		double ya = fmod (y*p, 3);
 		double za = fmod (z*p, 3);
-		if (
+		double wa = fmod (w*p, 3);
+		if (/* any two coordinates */
 			((xa > 1.0) && (xa < 2.0)   &&   (ya > 1.0) && (ya < 2.0)) ||
 			((ya > 1.0) && (ya < 2.0)   &&   (za > 1.0) && (za < 2.0)) ||
-			((xa > 1.0) && (xa < 2.0)   &&   (za > 1.0) && (za < 2.0))
+			((xa > 1.0) && (xa < 2.0)   &&   (za > 1.0) && (za < 2.0)) ||
+			((xa > 1.0) && (xa < 2.0)   &&   (wa > 1.0) && (wa < 2.0)) ||
+			((ya > 1.0) && (ya < 2.0)   &&   (wa > 1.0) && (wa < 2.0)) ||
+			((wa > 1.0) && (wa < 2.0)   &&   (za > 1.0) && (za < 2.0))
 			) return false;
 		p *= 3;
 	}
@@ -191,6 +197,7 @@ double approxDistance (double x, double y, double z) {
 	x += 0.5;
 	y += 0.5;
 	z += 0.5;
+	double w = 1.5 +x -y -z;
 	int iterations = 7;
 	double d = -1;
 	if (x < 0) if ((d < 0)||(-x < d)) d = -x;
@@ -199,6 +206,8 @@ double approxDistance (double x, double y, double z) {
 	if (y > 1) if ((d < 0)||(y-1 < d)) d = y-1;
 	if (z < 0) if ((d < 0)||(-z < d)) d = -z;
 	if (z > 1) if ((d < 0)||(z-1 < d)) d = z-1;
+	if (w < 0) if ((d < 0)||(-w < d)) d = -w;
+	if (w > 1) if ((d < 0)||(w-1 < d)) d = w-1;
 	if (d > 0) return d;
 
 	double p = 3;
@@ -206,6 +215,7 @@ double approxDistance (double x, double y, double z) {
 		double xa = fmod (x*p, 3);
 		double ya = fmod (y*p, 3);
 		double za = fmod (z*p, 3);
+		double wa = fmod (w*p, 3);
 		d = -1;
 		if ((xa > 1.0) && (xa < 2.0)   &&   (ya > 1.0) && (ya < 2.0)) {
 			if ((d < 0)||(xa-1 < d)) d = xa-1;
@@ -225,6 +235,24 @@ double approxDistance (double x, double y, double z) {
 			if ((d < 0)||(za-1 < d)) d = za-1;
 			if ((d < 0)||(2-za < d)) d = 2-za;
 		}
+		if ((xa > 1.0) && (xa < 2.0)   &&   (wa > 1.0) && (wa < 2.0)) {
+			if ((d < 0)||(xa-1 < d)) d = xa-1;
+			if ((d < 0)||(2-xa < d)) d = 2-xa;
+			if ((d < 0)||(wa-1 < d)) d = wa-1;
+			if ((d < 0)||(2-wa < d)) d = 2-wa;
+		}
+		if ((wa > 1.0) && (wa < 2.0)   &&   (ya > 1.0) && (ya < 2.0)) {
+			if ((d < 0)||(wa-1 < d)) d = wa-1;
+			if ((d < 0)||(2-wa < d)) d = 2-wa;
+			if ((d < 0)||(ya-1 < d)) d = ya-1;
+			if ((d < 0)||(2-ya < d)) d = 2-ya;
+		}
+		if ((wa > 1.0) && (wa < 2.0)   &&   (za > 1.0) && (za < 2.0)) {
+			if ((d < 0)||(wa-1 < d)) d = wa-1;
+			if ((d < 0)||(2-wa < d)) d = 2-wa;
+			if ((d < 0)||(za-1 < d)) d = za-1;
+			if ((d < 0)||(2-za < d)) d = 2-za;
+		}
 		if (d > 0) return d / p;
 		p *= 3;
 	}
@@ -233,7 +261,8 @@ double approxDistance (double x, double y, double z) {
 
 int main(int argc, char* argv[])
 {
-	srand ((unsigned int) time (NULL));
+	unsigned int t; time ((time_t *)&t); srand (t % RAND_MAX); random ();
+
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput; ULONG_PTR gdiplusToken;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
@@ -255,12 +284,14 @@ int main(int argc, char* argv[])
 	int lmHeight = ((PBITMAPINFOHEADER) pLightmapBitmap)->biHeight;
 	int lmStride = STRIDE_3ALIGN4 (lmWidth);
 
+#define QUICK 1 /* 0 slow, 1 quick */
 	int const S = 512; // tracing SxS bitmap
-	int const N = 7; // rays per ray per generation
-	int const TTL = 2; // generations: rays per pixel should be < N^TTL
+	int const N = 5; // rays per ray per generation
+	int const TTL = 2-1*QUICK; // generations: rays per pixel should be < N^TTL
 	double const STEP = 0.002; // 0.0 < STEP << 1.0
 	int const STEP_N = 12345; // number of different random steps to choose from
-	int const PASSES = 10;
+	int const PASSES = 3-2*QUICK;
+	double const L = 1-0.6*QUICK; // != 1 to fix color range
 
 	int const MAX_RAYS = 10000000;
 
@@ -334,22 +365,18 @@ int main(int argc, char* argv[])
 
 	if (!false) {
 		// to set specific orientation
-		camPosX = -0.733089;
-		camPosY = 0.617209;
-		camPosZ = -0.285714;
-		camFwdX = 0.733089;
-		camFwdY = -0.617209;
-		camFwdZ = 0.285714;
+		camPosX = -0.107702;
+		camPosY = -0.910165;
+		camPosZ = 0.400000;
+		camFwdX = 0.107702;
+		camFwdY = 0.910165;
+		camFwdZ = -0.400000;
 		camUpX = 0.000000;
-		camUpY = 0.420086;
-		camUpZ = 0.907484;
-		camSideX = -0.680132;
-		camSideY = -0.665267;
-		camSideZ = 0.307961;
-
-		/*camPosX -= 0.02 * camUpX;
-		camPosY -= 0.02 * camUpY;
-		camPosZ -= 0.02 * camUpZ;*/
+		camUpY = -0.402340;
+		camUpZ = -0.915490;
+		camSideX = -0.994183;
+		camSideY = 0.098600;
+		camSideZ = -0.043333;
 	}
 
 	// render several times
@@ -371,7 +398,7 @@ int main(int argc, char* argv[])
 		for (i = 0; i < MAX_RAYS; i++) Ray::Clear (&rays [i]);
 
 		// generation zero
-		double fovAtan = 1.5; // 1 = 90 deg, infinity = 180 deg
+		double fovAtan = 2.0; // 1 = 90 deg, infinity = 180 deg
 		for (i = 0; i < S; i++)
 		for (j = 0; j < S; j++) {
 			Ray &r = rays [i + S * j]; r.active = true;
@@ -428,7 +455,7 @@ int main(int argc, char* argv[])
 					}
 
 					r.active = false; beginAt++; beginAt %= MAX_RAYS;
-					if (beginAt % 12345 == 0) printf ("\rPass %d ray %d generation %d pool at %d        ", pass, beginAt - 1, r.generation, newRaysAt);
+					if (beginAt % 12345 == 0) printf ("\rPass %d/%d ray %d generation %d pool at %d        ", (pass+1), PASSES, beginAt - 1, r.generation, newRaysAt);
 				} else {
 					double d2 = r.x * r.x + r.y * r.y + r.z * r.z;
 					if (d2 > 3.1415) {
@@ -446,7 +473,7 @@ int main(int argc, char* argv[])
 						num [r.s] += 1;
 
 						r.active = false; beginAt++; beginAt %= MAX_RAYS;
-						if (beginAt % 12345 == 0) printf ("\rPass %d ray %d generation %d pool at %d light  ", pass, beginAt - 1, r.generation, newRaysAt);
+						if (beginAt % 12345 == 0) printf ("\rPass %d/%d ray %d generation %d pool at %d light  ", (pass+1), PASSES, beginAt - 1, r.generation, newRaysAt);
 					}
 				}
 			} else {
@@ -461,7 +488,7 @@ int main(int argc, char* argv[])
 		
 		for (s = 0; s < SS; s++) {
 			// ugly hack for sky :(
-			double ns = (num [s] > 1) ? /* body */ 0.4*sum : /* sky: */ 1;
+			double ns = (num [s] > 1) ? /* body */ L * sum : /* sky: */ 1;
 			int ir = int (red   [s] / ns); if (ir > 255) ir = 255;
 			int ig = int (green [s] / ns); if (ig > 255) ig = 255;
 			int ib = int (blue  [s] / ns); if (ib > 255) ib = 255;
