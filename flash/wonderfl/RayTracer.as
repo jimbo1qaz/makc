@@ -1,4 +1,4 @@
-package  {
+﻿package  {
 	import flash.display.BitmapData;
 	import flash.display.Loader;
 	import flash.display.Sprite;
@@ -19,11 +19,11 @@ package  {
 			loader.contentLoaderInfo.addEventListener (Event.COMPLETE, function onHazLightmap (e:Event):void {
 				lightmap = loader.content ["bitmapData"]; init ();
 			});
-			loader.load (new URLRequest ("http://assets.wonderfl.net/images/related_images/0/0d/0dbe/0dbe43b47f333087e064078a329b331c73ad6dd7"/*"lightmap.jpg"*/),
+			loader.load (new URLRequest ("http://assets.wonderfl.net/images/related_images/0/0d/0dbe/0dbe43b47f333087e064078a329b331c73ad6dd7"/*"lightmap.jpg"*/), 
 				new LoaderContext (true));
 		}
 
-		private const S:int = 128; // tracing SxS bitmap
+		private const S:int = 100; // tracing SxS bitmap
 		private const N:int = 7; // rays per ray per generation
 		private const TTL:int = 2; // generations: rays per pixel should be < N^TTL
 		private const M:int = 50; // max steps per frame
@@ -99,6 +99,18 @@ package  {
 			var camSideX:Number = camFwdY * camUpZ - camUpY * camFwdZ;
 			var camSideY:Number = camFwdZ * camUpX - camUpZ * camFwdX;
 			var camSideZ:Number = camFwdX * camUpY - camUpX * camFwdY;
+/*camPosX = -0.498168;
+camPosY = 0.334408;
+camPosZ = 0.800000;
+camFwdX = 0.454971;
+camFwdY = -0.593262;
+camFwdZ = -0.664109;
+camUpX = 0.000000;
+camUpY = -0.745766;
+camUpZ = 0.666208;
+camSideX = -0.890506;
+camSideY = -0.303105;
+camSideZ = -0.339302;*/
 
 			// generation zero
 			var fovAtan:Number = 1.5; // 1 = 90°, ∞ = 180°
@@ -114,13 +126,6 @@ package  {
 				rays.push (r);
 			}
 
-			// pre-multiply scaterring directions
-			for (k = 0; k < N; k++) {
-				directions [k].dx *= STEP;
-				directions [k].dy *= STEP;
-				directions [k].dz *= STEP;
-			}
-
 			addEventListener (Event.ENTER_FRAME, loop);
 		}
 
@@ -131,10 +136,13 @@ package  {
 		private function hitTest (x:Number, y:Number, z:Number):Boolean {
 			// Menger sponge:
 			// http://www.fractalforums.com/3d-fractal-generation/revenge-of-the-half-eaten-menger-sponge/
+			/*x *= 2;
+			y *= 2;
+			z *= 2;*/
 			x += 0.5;
 			y += 0.5;
 			z += 0.5;
-			var iterations:int = 5;
+			var iterations:int = 4;
 			if ((x<0)||(x>1)||(y<0)||(y>1)||(z<0)||(z>1)) return false;
 			var p:Number = 3;
 			for (var m:int = 1; m < iterations; m++) {
@@ -149,7 +157,55 @@ package  {
 				p *= 3;
 			}
 			return true;
-			//return (x * x + y * y + z * z < 0.3);
+			//return (x * x + y * y + z * z < 0.1);
+		}
+
+		private function appDist (x:Number, y:Number, z:Number):Number {
+			/*x *= 2;
+			y *= 2;
+			z *= 2;*/
+			x += 0.5;
+			y += 0.5;
+			z += 0.5;
+
+			var iterations:int = 4;
+			var d:Number = -1;
+			if (x < 0) if ((d < 0)||(-x < d)) d = -x;
+			if (x > 1) if ((d < 0)||(x-1 < d)) d = x-1;
+			if (y < 0) if ((d < 0)||(-y < d)) d = -y;
+			if (y > 1) if ((d < 0)||(y-1 < d)) d = y-1;
+			if (z < 0) if ((d < 0)||(-z < d)) d = -z;
+			if (z > 1) if ((d < 0)||(z-1 < d)) d = z-1;
+			if (d > 0) return d;
+
+			var p:Number = 3;
+			for (var m:int = 1; m < iterations; m++) {
+				var xa:Number = floatmod (x*p, 3);
+				var ya:Number = floatmod (y*p, 3);
+				var za:Number = floatmod (z*p, 3);
+				d = -1;
+				if ((xa > 1.0) && (xa < 2.0)   &&   (ya > 1.0) && (ya < 2.0)) {
+					if ((d < 0)||(xa-1 < d)) d = xa-1;
+					if ((d < 0)||(2-xa < d)) d = 2-xa;
+					if ((d < 0)||(ya-1 < d)) d = ya-1;
+					if ((d < 0)||(2-ya < d)) d = 2-ya;
+				}
+				if ((za > 1.0) && (za < 2.0)   &&   (ya > 1.0) && (ya < 2.0)) {
+					if ((d < 0)||(za-1 < d)) d = za-1;
+					if ((d < 0)||(2-za < d)) d = 2-za;
+					if ((d < 0)||(ya-1 < d)) d = ya-1;
+					if ((d < 0)||(2-ya < d)) d = 2-ya;
+				}
+				if ((xa > 1.0) && (xa < 2.0)   &&   (za > 1.0) && (za < 2.0)) {
+					if ((d < 0)||(xa-1 < d)) d = xa-1;
+					if ((d < 0)||(2-xa < d)) d = 2-xa;
+					if ((d < 0)||(za-1 < d)) d = za-1;
+					if ((d < 0)||(2-za < d)) d = 2-za;
+				}
+				if (d > 0) return d / p;
+				p *= 3;
+			}
+			return 0;
 		}
 
 		private function loop (e:Event):void {
@@ -178,7 +234,30 @@ package  {
 					// process one ray
 					var r:Ray = rays [0];
 					for (var bar:int = 0; bar < M; bar++) {
-						r.x += r.dx; r.y += r.dy; r.z += r.dz;
+						/*r.x += r.dx; r.y += r.dy; r.z += r.dz;
+						if (hitTest (r.x, r.y, r.z)) {*/
+						var step:Number = appDist (r.x, r.y, r.z);
+						if (step < STEP) step = STEP;
+
+						var rx0:Number = r.x, rx1:Number = r.x + r.dx * step, rx:Number = rx1;
+						var ry0:Number = r.y, ry1:Number = r.y + r.dy * step, ry:Number = ry1;
+						var rz0:Number = r.z, rz1:Number = r.z + r.dz * step, rz:Number = rz1;
+
+						if (hitTest (rx, ry, rz)) while (
+							(rx1 - rx0) * (rx1 - rx0) +
+							(ry1 - ry0) * (ry1 - ry0) +
+							(rz1 - rz0) * (rz1 - rz0) > (0.00001 * 0.00001)) {
+							// http://www.codinginstinct.com/2008/11/raytracing-4d-fractals-visualizing-four.html
+							rx = 0.5 * (rx0 + rx1); ry = 0.5 * (ry0 + ry1); rz = 0.5 * (rz0 + rz1);
+							if (hitTest (rx, ry, rz)) {
+								rx1 = rx; ry1 = ry; rz1 = rz;
+							} else {
+								rx0 = rx; ry0 = ry; rz0 = rz;
+							}
+						}
+
+						r.x = rx1; r.y = ry1; r.z = rz1;
+
 						if (hitTest (r.x, r.y, r.z)) {
 							// we hit something - scatter
 							if (r.generation < TTL)
