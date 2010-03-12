@@ -11,7 +11,7 @@
 			// shader from http://www.petrileskinen.fi/Actionscript/ThreePointGradient/ThreePointGradientPBK.html
 			[Embed(source="pixelero.pbj",mimeType="application/octet-stream")] var S1:Class;
 
-			// non-linear shader
+			// my shader
 			[Embed(source="makc.pbj",mimeType="application/octet-stream")] var S2:Class;
 
 			// via beginBitmapFill
