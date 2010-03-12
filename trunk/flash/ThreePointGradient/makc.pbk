@@ -1,0 +1,64 @@
+<languageVersion : 1.0;> 
+kernel ThreePointGradient 
+< 
+    namespace : "experimental"; 
+    vendor : "makc"; 
+    version : 1; 
+    description : "Creates a gradient fill using three specified points and colors."; 
+> 
+{ 
+    parameter float2 point1 // coordinates of the first point 
+    < 
+        minValue:float2(0, 0); 
+        maxValue:float2(4000, 4000); 
+        defaultValue:float2(0, 0); 
+    >; 
+     
+    parameter float4 color1 // color at the first point, opaque red by default 
+    < 
+        defaultValue:float4(1.0, 0.0, 0.0, 1.0); 
+    >; 
+     
+    parameter float2 point2 // coordinates of the second point 
+    < 
+        minValue:float2(0, 0); 
+        maxValue:float2(4000, 4000); 
+        defaultValue:float2(0, 200); 
+    >; 
+     
+    parameter float4 color2 // color at the second point, opaque green by default 
+    < 
+        defaultValue:float4(0.0, 1.0, 0.0, 1.0); 
+    >; 
+     
+    parameter float2 point3 // coordinates of the third point 
+    < 
+        minValue:float2(0, 0); 
+        maxValue:float2(4000, 4000); 
+        defaultValue:float2(200, 0); 
+    >; 
+     
+    parameter float4 color3 // color at the third point, opaque blue by default 
+    < 
+        defaultValue:float4(0.0, 0.0, 1.0, 1.0); 
+    >; 
+
+//input image4 src;
+    output pixel4 dst; 
+     
+    void evaluatePixel() 
+    {
+        // see formula 14 at http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+        float d3_12 = abs ((point2.x - point1.x)*(point1.y - point3.y) - (point1.x - point3.x)*(point2.y - point1.y));
+        float d2_13 = abs ((point3.x - point1.x)*(point1.y - point2.y) - (point1.x - point2.x)*(point3.y - point1.y));
+        float d1_23 = abs ((point3.x - point2.x)*(point2.y - point1.y) - (point2.x - point1.x)*(point3.y - point2.y));
+
+        float2 point0 = outCoord ();
+
+        float d0_12 = abs ((point2.x - point1.x)*(point1.y - point0.y) - (point1.x - point0.x)*(point2.y - point1.y));
+        float d0_13 = abs ((point3.x - point1.x)*(point1.y - point0.y) - (point1.x - point0.x)*(point3.y - point1.y));
+        float d0_23 = abs ((point3.x - point2.x)*(point2.y - point0.y) - (point2.x - point0.x)*(point3.y - point2.y));
+        
+        dst = color1 * d0_23 / d1_23 + color2 * d0_13 / d1_23 + color3 * d0_12 / d3_12;
+    } 
+}
