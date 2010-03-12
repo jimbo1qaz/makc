@@ -49,15 +49,15 @@ kernel ThreePointGradient
     void evaluatePixel() 
     {
         // see formula 14 at http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
-        float d3_12 = abs ((point2.x - point1.x)*(point1.y - point3.y) - (point1.x - point3.x)*(point2.y - point1.y));
-        float d2_13 = abs ((point3.x - point1.x)*(point1.y - point2.y) - (point1.x - point2.x)*(point3.y - point1.y));
-        float d1_23 = abs ((point3.x - point2.x)*(point2.y - point1.y) - (point2.x - point1.x)*(point3.y - point2.y));
+        float d3_12 = (point2.x - point1.x)*(point1.y - point3.y) - (point1.x - point3.x)*(point2.y - point1.y);
+        float d2_13 = (point3.x - point1.x)*(point1.y - point2.y) - (point1.x - point2.x)*(point3.y - point1.y);
+        float d1_23 = (point3.x - point2.x)*(point2.y - point1.y) - (point2.x - point1.x)*(point3.y - point2.y);
 
         float2 point0 = outCoord ();
 
-        float d0_12 = abs ((point2.x - point1.x)*(point1.y - point0.y) - (point1.x - point0.x)*(point2.y - point1.y));
-        float d0_13 = abs ((point3.x - point1.x)*(point1.y - point0.y) - (point1.x - point0.x)*(point3.y - point1.y));
-        float d0_23 = abs ((point3.x - point2.x)*(point2.y - point0.y) - (point2.x - point0.x)*(point3.y - point2.y));
+        float d0_12 = (point2.x - point1.x)*(point1.y - point0.y) - (point1.x - point0.x)*(point2.y - point1.y);
+        float d0_13 = (point3.x - point1.x)*(point1.y - point0.y) - (point1.x - point0.x)*(point3.y - point1.y);
+        float d0_23 = (point3.x - point2.x)*(point2.y - point0.y) - (point2.x - point0.x)*(point3.y - point2.y);
         
         dst = color1 * d0_23 / d1_23 + color2 * d0_13 / d2_13 + color3 * d0_12 / d3_12;
     } 
