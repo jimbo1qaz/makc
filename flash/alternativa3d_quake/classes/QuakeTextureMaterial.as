@@ -26,13 +26,21 @@
 		 * That's where magic happens...
 		 */
 		override alternativa3d function canDraw (param1:PolyPrimitive):Boolean
-        {
-			return visible && super.canDraw (param1);
-        }
+		{
+			return _visible && super.canDraw (param1);
+		}
+
+		private var _visible:Boolean = true;
 
 		/**
 		 * Boolean value to control material visibility.
 		 */
-		public var visible:Boolean = true;
+		public function get visible ():Boolean { return _visible; }
+		public function set visible (v:Boolean):void {
+			_visible = v;
+			if (_surface != null) {
+				_surface.addMaterialChangedOperationToScene ();
+			}
+		}
 	}
 }
