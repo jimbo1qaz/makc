@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" horizontalAlign="left">
+ 
+    <mx:Script>
+        <![CDATA[
+		import flash.geom.Point;
+		import utils.ImageUtil;
+ 
+        private var _fileReference:FileReference;
+ 
+        private function browseButton_clickHandler(event:MouseEvent):void {
+            _fileReference = new FileReference();
+            _fileReference.addEventListener(Event.SELECT, fileReference_selectHandler);
+            _fileReference.addEventListener(Event.COMPLETE, fileReference_completeHandler);
+            _fileReference.browse();
+        }
+ 
+        private function fileReference_selectHandler(event:Event):void {
+            _fileReference.load();
+        }
+ 
+        private function fileReference_completeHandler(event:Event):void {
+            fileNameTextInput.text = _fileReference.name;
+ 
+            try {
+                var pt:Point = ImageUtil.GetImageDimensions (_fileReference.data);
+                textArea.text = "Width: " + pt.x + "\n";
+                textArea.text += "Height: " + pt.y;
+            } catch (e:Error) {
+                textArea.text = "Error decoding image";
+            }
+        }
+ 
+        ]]>
+    </mx:Script>
+ 
+    <mx:Label text="Browse for an image file." fontWeight="bold"/>
+ 
+    <mx:HBox width="100%">
+        <mx:TextInput id="fileNameTextInput" width="100%" editable="false"/>
+        <mx:Button id="browseButton" label="..." click="browseButton_clickHandler(event)"/>
+    </mx:HBox>
+ 
+    <mx:TextArea id="textArea" width="100%" height="100%"/>
+ 
+</mx:Application>
