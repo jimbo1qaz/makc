@@ -47,7 +47,7 @@ package utils {
 		private static function GetPNGDimensions (data:IDataInput):Point {
 			const SIGNATURE_BYTES:Array = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 			const CHUNK_TYPE_SIZE:uint = 4;
-			if (data.bytesAvailable < SIGNATURE_BYTES.length -1 +2 +CHUNK_TYPE_SIZE +8) return null;
+			if (data.bytesAvailable < SIGNATURE_BYTES.length -1 +4 +CHUNK_TYPE_SIZE +8) return null;
 			// read signature
 			for (var i:uint = +1; i < SIGNATURE_BYTES.length; i++) {
 				if (data.readUnsignedByte() != SIGNATURE_BYTES [i]) {
