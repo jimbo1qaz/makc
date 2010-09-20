@@ -25,6 +25,14 @@
 			info.autoSize = TextFieldAutoSize.LEFT;
 			addChild (info);
 
+			info.text = "Click me...";
+
+			stage.addEventListener (MouseEvent.CLICK, onStageClick);
+		}
+
+		private function onStageClick (e:Event):void {
+			stage.removeEventListener (MouseEvent.CLICK, onStageClick);
+
 			var loader:ClientMP3Loader = new ClientMP3Loader;
 			loader.addEventListener (Event.CANCEL, cancelHandler);
 			loader.addEventListener (Event.COMPLETE, completeHandler);
