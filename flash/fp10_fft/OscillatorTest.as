@@ -12,6 +12,7 @@
 
 		private var info:TextField;
 		private var sound:Sound;
+		private var soundOutput:Sound;
 		private var channel:SoundChannel;
 		private var oscillators:Array;
 
@@ -29,7 +30,6 @@
 			sound.addEventListener (ProgressEvent.PROGRESS, progressHandler);
 			sound.addEventListener (Event.COMPLETE, completeHandler);
 			sound.load (new URLRequest ("test_beat.mp3"));
-			channel = sound.play (0, int.MAX_VALUE);
 		}
 
 		private function progressHandler(event:ProgressEvent):void {
@@ -50,20 +50,39 @@
 				oscillators.push (osc);
 				info.appendText ("\nOcsillator w0 = " + w + " Hz, c = " + c.toFixed (5) + ", expected resonance at " + osc.resonanceFrequency.toFixed (5) + " Hz");
 			}
-			setInterval (updateOscillators, 2048 * 1000 / 44100);
+
+			// start playing
+			soundOutput = new Sound;
+			soundOutput.addEventListener (SampleDataEvent.SAMPLE_DATA, supplyData);
+			soundOutput.play ();
 
 			addEventListener (Event.ENTER_FRAME, enterFrameHandler);
 		}
 
 		private var lastv:Number = 0, feed:Number = 0;
-		private function updateOscillators ():void {
+		private function supplyData (e:SampleDataEvent):void {
+			// loop from sound data
+			var n:int = sound.extract (e.data, 2048, e.position % (sound.length * 44.1));
+			if (n < 2048) sound.extract (e.data, 2048 - n, 0);
+
+			// the above writes 2048 * 2 (left, right) * 4 (4 bytes per float) bytes = 16384
+			// we go back 16384 bytes and calculate sound energy
+			e.data.position -= 16384;
+			var e1:Number = 0, e2:Number = 0;
+			var last1:Number = e.data.readFloat (), last2:Number = e.data.readFloat ();
+			for (var k:int = 0; k < 2048 - 1; k++) {
+				var v1:Number = e.data.readFloat (), v2:Number = e.data.readFloat ();
+				e1 += v1 * v1 + (v1 - last1) * (v1 - last1); last1 = v1;
+				e2 += v2 * v2 + (v2 - last2) * (v2 - last2); last2 = v2;
+			}
+
 			// get new peak
-			var v:Number = Math.max (channel.leftPeak, channel.rightPeak); feed = v -mouseX / stage.stageWidth * lastv; lastv = v;
+			var v:Number = Math.sqrt (e1 + e2) / 50; feed = v -mouseX / stage.stageWidth * lastv; lastv = v;
 
 			// update oscillators
 			for (var i:int = 0; i < oscillators.length; i++)
 				Oscillator (oscillators [i]).update (feed);
-		}
+		} 
 
 		private function enterFrameHandler (event:Event):void {
 			var i:int, n:int = oscillators.length, w:int = 15;
