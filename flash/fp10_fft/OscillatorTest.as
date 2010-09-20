@@ -25,6 +25,13 @@
 			info.autoSize = TextFieldAutoSize.LEFT;
 			addChild (info);
 
+			var loader:ClientMP3Loader = new ClientMP3Loader;
+			loader.addEventListener (Event.CANCEL, cancelHandler);
+			loader.addEventListener (Event.COMPLETE, completeHandler);
+			loader.load ();
+		}
+
+		private function cancelHandler(event:Event):void {
 			// load test.mp3
 			sound = new Sound;
 			sound.addEventListener (ProgressEvent.PROGRESS, progressHandler);
@@ -38,9 +45,12 @@
 		}
 
 		private function completeHandler (event:Event):void {
+			if (event.target as ClientMP3Loader) {
+				sound = ClientMP3Loader (event.target).sound;
+			}
+
 			// now that we have something to work with...
-			info.text = "Малюємо осцилятори, 1...9Гц, перший стовбчик - вхід осциляторів;\n"
-				+ "Миша зліва подає в осцилятори вихідний сигнал, миша зправа - похідну.\n";
+			info.text = "Малюємо осцилятори, 1...9Гц, перший стовбчик - вхід осциляторів;\n";
 
 			oscillators = [];
 			// 1 to 9 Hz, 10 Hz is too close to Nyquist limit, 0.5 * (44100 / 2048) = 10.77 Hz
@@ -59,7 +69,7 @@
 			addEventListener (Event.ENTER_FRAME, enterFrameHandler);
 		}
 
-		private var lastv:Number = 0, feed:Number = 0;
+		private var lastv:Number = 0, feed:Number = 0, maxv:Number = 50;
 		private function supplyData (e:SampleDataEvent):void {
 			// loop from sound data
 			var n:int = sound.extract (e.data, 2048, e.position % (sound.length * 44.1));
@@ -77,7 +87,8 @@
 			}
 
 			// get new peak
-			var v:Number = Math.sqrt (e1 + e2) / 50; feed = v -mouseX / stage.stageWidth * lastv; lastv = v;
+			var v:Number = Math.sqrt (e1 + e2) / maxv; feed = v -/*mouseX / stage.stageWidth */ lastv; lastv = v;
+			maxv *= 0.99; maxv += 0.01 * v; if (maxv < 15 /* fail-safety hack */) maxv = 15;
 
 			// update oscillators
 			for (var i:int = 0; i < oscillators.length; i++)
@@ -87,12 +98,20 @@
 		private function enterFrameHandler (event:Event):void {
 			var i:int, n:int = oscillators.length, w:int = 15;
 
+			var max_blue:Number = 0, max_green:Number = 0;
+
 			// draw oscillators and signal
 			graphics.clear ();
 			graphics.lineStyle (0, 255 * 256);
 			for (i = -1; i < n; i++) {
 				var p:Number = (i < 0) ? feed : Oscillator (oscillators [i]).x;
 				graphics.drawRect ((w + 2) * (i+1), 250 + ((p > 0) ? 0 : 100 * p), w + 2, 100 * Math.abs (p));
+				if (i >= 0) {
+					if (Oscillator (oscillators [i]).energy > max_blue) {
+						max_blue = Oscillator (oscillators [i]).energy;
+						max_green = Oscillator (oscillators [i]).x;
+					}
+				}
 			}
 			graphics.lineStyle ();
 			graphics.beginFill (255, 0.5);
@@ -101,6 +120,12 @@
 			graphics.endFill ();
 			graphics.beginFill (255 * 65536, 0.5);
 			graphics.drawRect (1, 250, w, 100 * lastv);
+
+			// viz app test
+			graphics.lineStyle ();
+			graphics.beginFill (255 * 257);
+			graphics.drawCircle (400, 300, 10);
+			graphics.drawCircle (400 + Math.min (100, Math.max (-100, 50 * max_green)), 300, 20);
 		}
 	}
 }
