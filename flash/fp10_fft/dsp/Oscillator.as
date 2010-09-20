@@ -62,6 +62,13 @@
 		 */
 		public function get energy ():Number { return ae; }
 
+		/**
+		 * Resonance frequency for a sinusoidal driving force.
+		 */
+		public function get resonanceFrequency ():Number {
+			return w0 * Math.sqrt (1 - 2 * b * b);
+		}
+
 		private var b:Number;
 		private var tstep:Number;
 		private var w0:Number;
