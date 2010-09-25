@@ -1,0 +1,63 @@
+<languageVersion : 1.0;>
+
+kernel SlopeEstimator
+<   namespace : "experimental";
+    vendor : "makc";
+    version : 1;
+    description : "slope estimator";
+>
+{
+    parameter float threshold <
+        minValue: 0.0;
+        maxValue: 9.0;
+        defaultValue: 0.3;
+    >;
+
+    input image4 src;
+    output pixel4 dst;
+
+    void
+    evaluatePixel()
+    {
+        float2 at = outCoord ();
+        pixel4 res = pixel4 (0.0, 0.0, 0.0, 1.0);
+        // 3x3 Scharr operator (0.3, 1.0, 0.3)
+        pixel4 ne = sampleNearest (src, float2 (at.x + 1.0, at.y - 1.0));
+        pixel4 se = sampleNearest (src, float2 (at.x + 1.0, at.y + 1.0));
+        pixel4 sw = sampleNearest (src, float2 (at.x - 1.0, at.y + 1.0));
+        pixel4 nw = sampleNearest (src, float2 (at.x - 1.0, at.y - 1.0));
+        pixel4 dx =
+            sampleNearest (src, float2 (at.x + 1.0, at.y)) - // e
+            sampleNearest (src, float2 (at.x - 1.0, at.y)) + // w
+            0.3 * (ne + se - nw - sw);
+        pixel4 dy =
+            sampleNearest (src, float2 (at.x, at.y + 1.0)) - // s
+            sampleNearest (src, float2 (at.x, at.y - 1.0)) + // n
+            0.3 * (se + sw - ne - nw);
+        // combined gradient
+        float2 d = float2 (
+            dx.r + dx.g + dx.b,
+            dy.r + dy.g + dy.b
+        );
+        // threshold
+        if (length (d) > threshold) {
+            // map -PI..PI to 0..PI to 0..3
+            float a = 0.954929658551372 * atan (d.y, d.x);
+            if (a <= 0.0) a += 3.0;
+            if (a < 1.0) {
+                // 0 to PI/3 go to red
+                res.r = a;
+            } else {
+                if (a < 2.0) {
+                    // PI/3 to 2PI/3 go to green
+                    res.g = a - 1.0;
+                } else {
+                    // 2PI/3 to PI go to blue
+                    res.b = a - 2.0;
+                }
+            }
+        }
+
+        dst = res;
+    }
+}
