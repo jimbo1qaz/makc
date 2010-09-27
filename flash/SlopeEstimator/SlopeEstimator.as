@@ -115,9 +115,14 @@ package {
 				var is_loc_max:Boolean = true;
 				var h_i:Number = h_linear [i];
 				for (var k:int = -K; k < K; k++) {
-					if (k == 0) continue;
-					if (h_linear [(i + 768 + k) % 768] >= h_i) {
-						is_loc_max = false; break;
+					if (k < 0) {
+						if (h_linear [(i + 768 + k) % 768] > h_i) {
+							is_loc_max = false; break;
+						}
+					} else if (k > 0) {
+						if (h_linear [(i + 768 + k) % 768] >= h_i) {
+							is_loc_max = false; break;
+						}
 					}
 				}
 				if (is_loc_max) {
