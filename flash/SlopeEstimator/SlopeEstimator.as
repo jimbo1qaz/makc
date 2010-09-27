@@ -112,12 +112,15 @@ package {
 			graphics.clear ();
 			var j:int = 0, K:int = kslider.value;
 			for (i = 0; i < 256 * 3; i++) {
-				var h_loc_max:Number = 0;
+				var is_loc_max:Boolean = true;
+				var h_i:Number = h_linear [i];
 				for (var k:int = -K; k < K; k++) {
-					c = h_linear [(i + 768 + k) % 768];
-					if (c > h_loc_max) h_loc_max = c;
+					if (k == 0) continue;
+					if (h_linear [(i + 768 + k) % 768] >= h_i) {
+						is_loc_max = false; break;
+					}
 				}
-				if ((h_linear [i] > c) && (h_linear [i] == h_loc_max)) {
+				if (is_loc_max) {
 					j++;
 					var n:Number = h_linear [i] / h_max;
 					graphics.lineStyle (2, [65536, 256, 1][i >> 8] * (i % 256));
