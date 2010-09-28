@@ -148,13 +148,12 @@ package {
         public function onFileSelected (e:Event):void { file.load (); }
         public function onFileLoaded (e:Event):void {
 			loader = new Loader;
+			loader.contentLoaderInfo.addEventListener (Event.COMPLETE, onImageReady);
 			loader.loadBytes (file.data);
-			// why can't Event.COMPLETE just fuckin' work?
-			addEventListener (Event.ENTER_FRAME, onImageReady);
 		}
 		public function onImageReady(e:Event):void {
 			if (loader.content) {
-				removeEventListener (Event.ENTER_FRAME, onImageReady);
+				loader.contentLoaderInfo.removeEventListener (Event.COMPLETE, onImageReady);
 				resized.draw (loader.content,
 					new Matrix (
 						-320 / loader.content.width, 0, 0,
