@@ -75,7 +75,7 @@ package {
 			lines = new Shape; addChild (lines); lines.scrollRect = resized.rect;
 			// image load button
 			var button:PushButton = new PushButton (this, 0, 0, "LOAD IMAGE", onButtonClicked);
-			// treshold slider
+			// treshold sliders
 			var tslider:HSlider = new HSlider (this, 0, 0, onTSlider);
 			tslider.minimum = 0; tslider.maximum = 9; tslider.tick = 0.01;
 			tslider.value = sfilter.shader.data.threshold.value [0];
