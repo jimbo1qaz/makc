@@ -1,4 +1,5 @@
 package {
+	import com.bit101.components.CheckBox;
 	import com.bit101.components.HSlider;
 	import com.bit101.components.Label;
 	import com.bit101.components.PushButton;
@@ -39,6 +40,7 @@ package {
 		public var kslider2:HSlider;
 		public var info:Label;
 		public var info2:Label;
+		public var mainAngle:CheckBox;
 		public var lines:Shape;
 		public function DistanceEstimator () {
 			stage.scaleMode = "noScale";
@@ -99,14 +101,18 @@ package {
 			kslider2 = new HSlider (this, 200, 310);
 			kslider2.minimum = 2; kslider2.maximum = 22; kslider2.tick = 2.0;
 			kslider2.value = 2;
-			// info label
+			// info labels
 			info = new Label (this, 200, 250, "");
 			info2 = new Label (this, 200, 290, "");
+			// mode
+			mainAngle = new CheckBox (this, tslider2.x, tslider2.y + 30, "Dominant angle only");
+			mainAngle.selected = true;
 			// processing
 			addEventListener (Event.ENTER_FRAME, loop);
         }
 		public var h_linear:Vector.<Number> = new Vector.<Number> (768, true);
 		public var h_indices:Vector.<int> = new Vector.<int> (50, true);
+		public var h_angles:Vector.<Number> = new Vector.<Number> (9, true);
 		public function loop (e:Event):void {
 			input.fillRect (input.rect, 0); input.draw (source,
 				new Matrix (-0.5, 0, 0, 0.5, 160), null, null, null, true
@@ -120,9 +126,12 @@ package {
 			var h_max:Number = copyToLinearArray (h, h_linear);
 			// find local maxima (and draw them)
 			graphics.clear ();
-			var j:int = findLocalMaxima (h_linear, h_indices, kslider.value);
+			var j:int = findLocalMaxima (h_linear, 0.2 * h_max, h_indices, kslider.value);
 			var i_max:int = 0, n_max:Number = 0;
-			for (var k:int = 0; k < j; k++) {
+			for (var k:int = 0; k < h_angles.length; k++) {
+				h_angles [k] = -1;
+			}
+			for (k = 0; k < j; k++) {
 				var i:int = h_indices [k];
 				var n:Number = h_linear [i] / h_max;
 				if (n_max < n) {
@@ -133,6 +142,7 @@ package {
 				var a:Number = Math.PI * i / (256 * 3 - 1);
 				graphics.moveTo (2, 360);
 				graphics.lineTo (2 + n * 120 * Math.sin (a), 360 - n * 120 * Math.cos (a));
+				if (k < h_angles.length) h_angles [k] = a;
 			}
 			info.text = j + " local maxima (angle)";
 			if (j < 1) {
@@ -146,22 +156,34 @@ package {
 			graphics.beginFill (0xFFFFFF);
 			graphics.drawCircle (2 + n_max * 120 * Math.sin (a), 360 - n_max * 120 * Math.cos (a), 5);
 			graphics.endFill ();
-			// let's now find lines for this angle
-			dfilter.shader.data.angle.value [0] = a;
-			output2.applyFilter (output, output.rect, output2.rect.topLeft, dfilter);
-			h = output2.histogram (r);
-			h_max = copyToLinearArray (h, h_linear);
-			// find local maxima (and draw them)
+			// let's now find lines for this angle (or h_angles)
+			info2.text = "(multiple angles)";
 			lines.graphics.clear ();
 			lines.graphics.lineStyle (2, 0xFF7F00);
-			j = findLocalMaxima (h_linear, h_indices, kslider2.value);
-			for (k = 0; k < j; k++) {
-				i = h_indices [k];
-				graphics.lineStyle (0, [65536, 256, 1][i >> 8] * (i % 256));
-				graphics.moveTo (200 + i / 4, 470);
-				graphics.lineTo (200 + i / 4, 470 - 100 * h_linear [i] / h_max);
-				// implicit threshold
-				if (h_linear [i] > 0.5 * h_max) {
+			for (var m:int = 0; m < h_angles.length; m++) {
+				if (!mainAngle.selected) {
+					a = h_angles [m];
+					if (a < 0) {
+						continue;
+					}
+				}
+
+				dfilter.shader.data.angle.value [0] = a; 
+				output2.applyFilter (output, output.rect, output2.rect.topLeft, dfilter);
+				h = output2.histogram (r);
+				h_max = copyToLinearArray (h, h_linear);
+				// find local maxima (and draw them)
+				j = findLocalMaxima (h_linear, 0.5 * h_max, h_indices, kslider2.value);
+				for (k = 0; k < j; k++) {
+					i = h_indices [k];
+					graphics.lineStyle (0, [65536, 256, 1][i >> 8] * (i % 256));
+					if (mainAngle.selected) {
+						graphics.moveTo (200 + i / 4, 470);
+						graphics.lineTo (200 + i / 4, 470 - 100 * h_linear [i] / h_max);
+					} else {
+						graphics.moveTo (200 + i / 4, 470 - 10 * m);
+						graphics.lineTo (200 + i / 4, 470 - 10 * m - 10 * h_linear [i] / h_max);
+					}
 					// draw lines: Ax + By + C = 0, y = - (Ax + C) / B (also scale up by 2)
 					var A:Number = - Math.cos (+a);
 					var B:Number = - Math.sin (+a);
@@ -169,8 +191,11 @@ package {
 					lines.graphics.moveTo (0, -2 * C / B);
 					lines.graphics.lineTo (2 * 160, -2 * (A * 160 + C) / B);
 				}
+				if (mainAngle.selected) {
+					info2.text = j + " local maxima (distance)";
+					break;
+				}
 			}
-			info2.text = j + " local maxima (distance)";
 
 			graphics.moveTo (200, 470);
 			for (i = 0; i < 3; i++) {
@@ -194,7 +219,7 @@ package {
 			}
 			return h_max;
 		}
-		public function findLocalMaxima (input:Vector.<Number>, output:Vector.<int>, K:int):int {
+		public function findLocalMaxima (input:Vector.<Number>, threshold:Number, output:Vector.<int>, K:int):int {
 			var L:int = input.length, j:int = 0;
 			var n:int = input.length / output.length;
 			search: {
@@ -203,21 +228,23 @@ package {
 						var i:int = n * p + q;
 						if (i < input.length) {
 							var i_value:Number = input [i];
-							var i_ismax:Boolean = true;
-							for (var k:int = -K; k < K; k++) {
-								if (k < 0) {
-									if (input [(i + 768 + k) % 768] > i_value) {
-										i_ismax = false; break;
-									}
-								} else if (k > 0) {
-									if (input [(i + 768 + k) % 768] >= i_value) {
-										i_ismax = false; break;
+							if (i_value > threshold) {
+								var i_ismax:Boolean = true;
+								for (var k:int = -K; k < K; k++) {
+									if (k < 0) {
+										if (input [(i + 768 + k) % 768] > i_value) {
+											i_ismax = false; break;
+										}
+									} else if (k > 0) {
+										if (input [(i + 768 + k) % 768] >= i_value) {
+											i_ismax = false; break;
+										}
 									}
 								}
-							}
-							if (i_ismax) {
-								// dijkstra would hate me :(
-								output [j] = i; j++; if (j >= output.length) break search;
+								if (i_ismax) {
+									// dijkstra would hate me :(
+									output [j] = i; j++; if (j >= output.length) break search;
+								}
 							}
 						}
 					}
