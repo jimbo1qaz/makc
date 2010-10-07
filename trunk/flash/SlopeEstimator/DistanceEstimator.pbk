@@ -1,0 +1,62 @@
+<languageVersion : 1.0;>
+
+kernel DistanceEstimator
+<   namespace : "experimental";
+    vendor : "makc";
+    version : 1;
+    description : "distance estimator";
+>
+{
+    parameter float angle <
+        minValue: 0.0;
+        maxValue: 3.14159265;
+        defaultValue: 1.0;
+    >;
+
+    parameter float threshold <
+        minValue: 0.001;
+        maxValue: 0.1;
+        defaultValue: 0.01;
+    >;
+
+    input image4 src;
+    output pixel4 dst;
+
+    void
+    evaluatePixel()
+    {
+        float2 at = outCoord ();
+        pixel4 a4 = sampleNearest (src, at);
+        if (a4.r + a4.g + a4.b > 0.0) {
+            // unpack angle
+            float a = a4.r;
+            if (a4.g > 0.0) {
+                a = a4.g + 1.0;
+            } else {
+                if (a4.b > 0.0) {
+                    a = a4.b + 2.0;
+                }
+            }
+            a *= 1.0471975512;
+            if (abs (a - angle) < threshold) {
+                // calculate distance
+                float c = cos (a) * at.x + sin (a) * at.y;
+                // pack it, -768/2...+768/2 -> 0...3
+                c += 384.0; c *= 0.00390625;
+                // save for histogram()
+                if (c <= 1.0) {
+                    a4.r = c; a4.g = 0.0; a4.b = 0.0;
+                } else {
+                    if (c <= 2.0) {
+                        a4.r = 0.0; a4.g = c - 1.0; a4.b = 0.0;
+                    } else {
+                        a4.r = 0.0; a4.g = 0.0; a4.b = c - 2.0;
+                    }
+                }
+            } else {
+                a4.r = 0.0; a4.g = 0.0; a4.b = 0.0;
+            }
+        }
+        dst = a4;
+    }
+}

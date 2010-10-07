@@ -21,7 +21,8 @@ kernel SlopeEstimator
     {
         float2 at = outCoord ();
         pixel4 res = pixel4 (0.0, 0.0, 0.0, 1.0);
-        // 3x3 Scharr operator (0.3, 1.0, 0.3)
+        // 3x3 Kroon operator (should be better than Scharr's)
+        // http://www.k-zone.nl/Kroon_DerivativePaper.pdf
         pixel4 ne = sampleNearest (src, float2 (at.x + 1.0, at.y - 1.0));
         pixel4 se = sampleNearest (src, float2 (at.x + 1.0, at.y + 1.0));
         pixel4 sw = sampleNearest (src, float2 (at.x - 1.0, at.y + 1.0));
@@ -29,11 +30,11 @@ kernel SlopeEstimator
         pixel4 dx =
             sampleNearest (src, float2 (at.x + 1.0, at.y)) - // e
             sampleNearest (src, float2 (at.x - 1.0, at.y)) + // w
-            0.3 * (ne + se - nw - sw);
+            0.27865 * (ne + se - nw - sw);
         pixel4 dy =
             sampleNearest (src, float2 (at.x, at.y + 1.0)) - // s
             sampleNearest (src, float2 (at.x, at.y - 1.0)) + // n
-            0.3 * (se + sw - ne - nw);
+            0.27865 * (se + sw - ne - nw);
         // combined gradient
         float2 d = float2 (
             dx.r + dx.g + dx.b,
