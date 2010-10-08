@@ -22,6 +22,7 @@ package {
 	import flash.net.FileReference;
 	import flash.utils.clearTimeout;
 	import flash.utils.setTimeout;
+	import net.hires.debug.Stats;
 	[SWF (width=480,height=480)]
 	public class DistanceEstimator extends Sprite {
 		public var video:Video;
@@ -109,6 +110,9 @@ package {
 			mainAngle.selected = true;
 			// processing
 			addEventListener (Event.ENTER_FRAME, loop);
+			// mrdoob's stats
+			var stats:Stats = new Stats; stats.alpha = 0.75; addChild (stats);
+			button.x = stats.width;
         }
 		public var h_linear:Vector.<Number> = new Vector.<Number> (768, true);
 		public var h_indices:Vector.<int> = new Vector.<int> (50, true);
