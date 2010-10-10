@@ -1,0 +1,56 @@
+<languageVersion : 1.0;>
+
+kernel SlopeEstimator3
+<   namespace : "experimental";
+    vendor : "makc";
+    version : 1;
+    description : "slope estimator";
+>
+{
+    parameter float threshold <
+        minValue: 0.0;
+        maxValue: 9.0;
+        defaultValue: 0.3;
+    >;
+
+    input image4 src;
+    output pixel4 dst;
+
+    void
+    evaluatePixel()
+    {
+        float2 at = outCoord ();
+        pixel4 res = pixel4 (0.0, 0.0, 0.0, 1.0);
+        // 3x3 Kroon operator (should be better than Scharr's)
+        // http://www.k-zone.nl/Kroon_DerivativePaper.pdf
+        pixel4 ne = sampleNearest (src, float2 (at.x + 1.0, at.y - 1.0));
+        pixel4 se = sampleNearest (src, float2 (at.x + 1.0, at.y + 1.0));
+        pixel4 sw = sampleNearest (src, float2 (at.x - 1.0, at.y + 1.0));
+        pixel4 nw = sampleNearest (src, float2 (at.x - 1.0, at.y - 1.0));
+        pixel4 dx =
+            sampleNearest (src, float2 (at.x + 1.0, at.y)) - // e
+            sampleNearest (src, float2 (at.x - 1.0, at.y)) + // w
+            0.27865 * (ne + se - nw - sw);
+        pixel4 dy =
+            sampleNearest (src, float2 (at.x, at.y + 1.0)) - // s
+            sampleNearest (src, float2 (at.x, at.y - 1.0)) + // n
+            0.27865 * (se + sw - ne - nw);
+        // combined gradient
+        float2 d = float2 (
+            dx.r + dx.g + dx.b,
+            dy.r + dy.g + dy.b
+        );
+        // threshold
+        if (length (d) > threshold) {
+            // map -PI..PI to 0..PI to 0..1
+            float a = 0.31830988618379 * atan (d.y, d.x);
+            if (a <= 0.0) a += 1.0;
+            res.r = a;
+            // also vote for nearby angles
+            res.g = a - 0.00390625; // -1/256
+            res.b = a + 0.00390625; // +1/256
+        }
+
+        dst = res;
+    }
+}
