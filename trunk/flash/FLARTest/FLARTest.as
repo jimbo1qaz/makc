@@ -6,17 +6,17 @@ package {
 	import flash.geom.Point;
 	import flash.media.Camera;
 	import flash.media.Video;
+	import jp.nyatla.nyartoolkit.as3.core.types.NyARDoublePoint2d;
 	import org.libspark.flartoolkit.core.FLARCode;
 	import org.libspark.flartoolkit.core.FLARMat;
 	import org.libspark.flartoolkit.core.param.FLARParam;
 	import org.libspark.flartoolkit.core.raster.rgb.FLARRgbRaster_BitmapData;
 	import org.libspark.flartoolkit.core.transmat.FLARTransMatResult;
-	import org.libspark.flartoolkit.core.types.FLARIntSize;
 	import org.libspark.flartoolkit.detector.FLARSingleMarkerDetector;
 	import net.hires.debug.Stats;
 	/**
-	 * Testing FLARToolKit v1.
-	 * @see http://www.libspark.org/svn/as3/FLARToolKit/branches/ver1_x_x/src/org/libspark/flartoolkit/ r4416
+	 * Testing FLARToolKit (svn head)
+	 * @see http://www.libspark.org/svn/as3/FLARToolKit/trunk/ r4418
 	 * @author makc
 	 */
 	[SWF(width=320,height=240,frameRate=30)]
@@ -27,7 +27,6 @@ package {
 		public var buffer:BitmapData;
 		public var bufferMatrix:Matrix;
 		public var param:FLARParam;
-		public var focalLength:Number;
 		public var code:FLARCode;
 		public var raster:FLARRgbRaster_BitmapData;
 		public var result:FLARTransMatResult;
@@ -46,12 +45,12 @@ package {
 			video.attachCamera (camera);
 			// almost FLARToolKit standard param, but slightly better
 			param = new FLARParam;
-			param.getDistortionFactor ().setValue ([320, 240, 26.2, 1]);
-			param.getPerspectiveProjectionMatrix ().setValue (
+			param.setValue (Vector.<Number> ([320, 240, 26.2, 1]),
+				Vector.<Number> (
 				[713,   0, 320, 0,
 				   0, 713, 240, 0,
-				   0,   0,   1, 0]);
-			param.changeScreenSize (160, 120); calculateFocalLength ();
+				   0,   0,   1, 0]));
+			param.changeScreenSize (160, 120);
 			// 50% 16x16 hiro pattern
 			[Embed(source='hiro.pat',mimeType='application/octet-stream')] var Hiro:Class;
 			code = new FLARCode (16, 16);
@@ -99,29 +98,14 @@ package {
 			overlay.graphics.lineStyle (1, 0x00FF00);
 			overlay.graphics.moveTo (pt1.x, pt1.y); overlay.graphics.lineTo (pt4.x, pt4.y);
 		}
-		public var pt1:Point = new Point;
-		public var pt2:Point = new Point;
-		public var pt3:Point = new Point;
-		public var pt4:Point = new Point;
-		public function project (x:Number, y:Number, z:Number, out:Point):void {
-			out.x = 160 + 2 * x * focalLength / z;
-			out.y = 120 + 2 * y * focalLength / z;
-		}
-		public function calculateFocalLength ():void {
-			// this is hairy way of doing it, should be simpler...
-			const size:FLARIntSize = param.getScreenSize ();
-			const tMat:FLARMat = new FLARMat (3, 4);
-			const iMat:FLARMat = new FLARMat (3, 4);
-			param.getPerspectiveProjectionMatrix ().decompMat (iMat, tMat);
-			const i:Array = iMat.getArray ();
-			const t:Array = tMat.getArray ();
-			const h1:Number = size.h - 1;
-			const p11:Number = (h1 * i[2][1] - i[1][1]) / i[2][2];
-			const p12:Number = (h1 * i[2][2] - i[1][2]) / i[2][2];
-			const q11:Number = -(2 * p11 / h1);
-			const q12:Number = -(2 * p12 / h1) + 1.0;
-			const mp5:Number = q11 * t[1][1] + q12 * t[2][1];
-			focalLength = 0.5 * mp5 * size.h;
+		public var pt1:NyARDoublePoint2d = new NyARDoublePoint2d;
+		public var pt2:NyARDoublePoint2d = new NyARDoublePoint2d;
+		public var pt3:NyARDoublePoint2d = new NyARDoublePoint2d;
+		public var pt4:NyARDoublePoint2d = new NyARDoublePoint2d;
+		public function project (x:Number, y:Number, z:Number, out:NyARDoublePoint2d):void {
+			param.getPerspectiveProjectionMatrix ().projectionConvert_Number (x, y, z, out);
+			out.x *= 2;
+			out.y *= 2;
 		}
 	}
 }
