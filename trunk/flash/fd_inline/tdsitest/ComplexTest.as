@@ -1,3 +1,6 @@
+// this project requires tdsi (and tdsi requires scala)
+// http://code.google.com/p/apparat/downloads/detail?name=apparat-1.0.RC8-bin.zip
+// http://www.scala-lang.org/sites/default/files/linuxsoft_archives/downloads/distrib/files/scala-2.8.0.final.zip
 package {
 	import flash.display.Sprite;
 	
