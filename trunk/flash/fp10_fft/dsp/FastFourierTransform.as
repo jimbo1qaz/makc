@@ -24,7 +24,7 @@
 			// find power of 2 not exceeding samles length
 			var n:int = 2; while (n * 2 <= samples.length) n *= 2;
 			// transform samples
-			var n2:int = n >> 1;
+			var n2:int = n >> 1, k2:int;
 			nu = int (Math.log (n) * Math.LOG2E);
 			var nu1:int = nu - 1;
 			var tr:Number, ti:Number, p:Number, arg:Number, c:Number, s:Number;
@@ -50,10 +50,13 @@
 						arg = 2 * Math.PI * p / n;
 						c = Math.cos (arg);
 						s = Math.sin (arg);
-						tr = xre [k + n2] * c + xim [k + n2] * s;
-						ti = xim [k + n2] * c - xre [k + n2] * s;
-						xre [k + n2] = xre [k] - tr;
-						xim [k + n2] = xim [k] - ti;
+						k2 = k + n2;
+						xr = xre [k2];
+						xi = xim [k2];
+						tr = xr * c + xi * s;
+						ti = xi * c - xr * s;
+						xre [k2] = xre [k] - tr;
+						xim [k2] = xim [k] - ti;
 						xre [k] += tr;
 						xim [k] += ti;
 						k++;
