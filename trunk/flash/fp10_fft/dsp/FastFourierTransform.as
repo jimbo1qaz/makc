@@ -33,6 +33,8 @@
 				xre [i] = samples [i]; xim [i] = 0.0;
 			}
 
+			var aS:Number = 2 * Math.PI / n;
+
 			// bitrev vars
 			var _br_i:int, _br_j1:int, _br_j2:int;
 
@@ -47,7 +49,7 @@
 							_br_j1 = _br_j2;
 						}
 
-						arg = 2 * Math.PI * p / n;
+						arg = aS * p;
 						c = Math.cos (arg);
 						s = Math.sin (arg);
 						k2 = k + n2;
