@@ -33,10 +33,20 @@
 				xre [i] = samples [i]; xim [i] = 0.0;
 			}
 
+			// bitrev vars
+			var _br_i:int, _br_j1:int, _br_j2:int;
+
 			for (var l:int = 1; l <= nu; l++) {
 				while (k < n) {
 					for (i = 1; i <= n2; i++) {
-						p = bitrev (k >> nu1);
+//						p = bitrev (k >> nu1);
+						_br_j1 = k >> nu1; p = 0;
+						for (_br_i = 1; _br_i <= nu; _br_i++) {
+							_br_j2 = _br_j1 >> 1;
+							p = 2 * p + _br_j1 - 2 * _br_j2;
+							_br_j1 = _br_j2;
+						}
+
 						arg = 2 * Math.PI * p / n;
 						c = Math.cos (arg);
 						s = Math.sin (arg);
@@ -58,7 +68,14 @@
 			k = 0;
 			var r:int;
 			while (k < n) {
-				r = bitrev (k);
+//				r = bitrev (k);
+				_br_j1 = k; r = 0;
+				for (_br_i = 1; _br_i <= nu; _br_i++) {
+					_br_j2 = _br_j1 >> 1;
+					r = 2 * r + _br_j1 - 2 * _br_j2;
+					_br_j1 = _br_j2;
+				}
+
 				if (r > k) {
 					tr = xre [k];
 					ti = xim [k];
@@ -85,17 +102,6 @@
 		private var xim:Vector.<Number> = new <Number> [];
 
 		private var nu:int;
-		private function bitrev (j:int):int {
-			var j2:int;
-			var j1:int = j;
-			var k:int = 0;
-			for (var i:int = 1; i <= nu; i++) {
-				j2 = j1 >> 1;
-				k = 2 * k + j1 - 2 * j2;
-				j1 = j2;
-			}
-			return k;
-		}
 
 	}
 }
