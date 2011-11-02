@@ -10,13 +10,13 @@
 		/**
 		 * Magnitudes (corresponding frequency ranges from 0 to half of sampling frequency).
 		 */
-		public var magnitudes:Array = [];
+		public var magnitudes:Vector.<Number> = new <Number> [];
 
 		/**
 		 * Analyzes samples and fills <code>magnitudes</code> array.
 		 * @param	samples Array of numbers to analyze (length must be power of 2).
 		 */
-		public function analyze (samples:Array):void {
+		public function analyze (samples:Vector.<Number>):void {
 			// minimal sanity check
 			if ((samples == null) || (samples.length < 2)) {
 				magnitudes.length = 0; return;
@@ -81,8 +81,8 @@
 			magnitudes.length = n2;
 		}
 
-		private var xre:Array = [];
-		private var xim:Array = [];
+		private var xre:Vector.<Number> = new <Number> [];
+		private var xim:Vector.<Number> = new <Number> [];
 
 		private var nu:int;
 		private function bitrev (j:int):int {
