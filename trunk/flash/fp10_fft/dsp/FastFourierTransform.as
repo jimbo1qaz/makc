@@ -43,7 +43,7 @@
 						_br_j1 = k >> nu1; p = 0;
 						for (_br_i = 1; _br_i <= nu; _br_i++) {
 							_br_j2 = _br_j1 >> 1;
-							p = 2 * p + _br_j1 - 2 * _br_j2;
+							p = 2 * (p - _br_j2) + _br_j1;
 							_br_j1 = _br_j2;
 						}
 
@@ -75,7 +75,7 @@
 				_br_j1 = k; r = 0;
 				for (_br_i = 1; _br_i <= nu; _br_i++) {
 					_br_j2 = _br_j1 >> 1;
-					r = 2 * r + _br_j1 - 2 * _br_j2;
+					r = 2 * (r - _br_j2) + _br_j1;
 					_br_j1 = _br_j2;
 				}
 
