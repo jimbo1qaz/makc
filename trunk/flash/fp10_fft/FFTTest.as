@@ -50,7 +50,7 @@
 		private function enterFrameHandler (event:Event):void {
 			// get bytes of 512 samples
 			bytes.position = 0;
-			sound.extract (bytes, 512, channel.position * 44.1);
+			sound.extract (bytes, 1024, channel.position * 44.1);
 
 			// get samples of left channel
 			bytes.position = 0;
@@ -86,10 +86,12 @@
 			bytes.position = 0;
 			SoundMixer.computeSpectrum (bytes, true);
 
+			bytes.position = bytes.bytesAvailable / 2;
+
 			graphics.lineStyle ();
 			graphics.beginFill (0);
 			for (i = 0; i < Math.min (n, 256); i++) {
-				graphics.drawRect (w*i, 350, w, 50 * (bytes.readFloat () + bytes.readFloat ()));
+				graphics.drawRect (w*i, 350, w, 50 * bytes.readFloat ());
 			}
 			graphics.endFill ();
 		}
