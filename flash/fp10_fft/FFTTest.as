@@ -13,7 +13,7 @@
 		private var sound:Sound;
 		private var channel:SoundChannel;
 		private var bytes:ByteArray;
-		private var samples:Array;
+		private var samples:Vector.<Number>;
 		private var fft:FastFourierTransform;
 
 		public function FFTTest () {
@@ -43,7 +43,7 @@
 			info.text = "Малюємо частоти від 0 до 5КГц.\n" +
 				"Тестовий файл: 2с білого шуму, 2с 500 Гц, 2с 1.5КГц, 2с 4КГц.";
 
-			bytes = new ByteArray; samples = new Array; fft = new FastFourierTransform;
+			bytes = new ByteArray; samples = new <Number> []; fft = new FastFourierTransform;
 			addEventListener (Event.ENTER_FRAME, enterFrameHandler);
 		}
 
@@ -81,6 +81,17 @@
 				graphics.moveTo (w * (ticksStep / limitHz * n * i), 50);
 				graphics.lineTo (w * (ticksStep / limitHz * n * i), 45);
 			}
+
+			// try to align standard flash spectrum
+			bytes.position = 0;
+			SoundMixer.computeSpectrum (bytes, true);
+
+			graphics.lineStyle ();
+			graphics.beginFill (0);
+			for (i = 0; i < Math.min (n / 2, 256); i++) {
+				graphics.drawRect (2*w*i, 350, 2*w, 50 * (bytes.readFloat () + bytes.readFloat ()));
+			}
+			graphics.endFill ();
 		}
 	}
 }
