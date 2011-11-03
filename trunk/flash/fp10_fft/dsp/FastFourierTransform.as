@@ -97,13 +97,12 @@
 		private var xim:Vector.<Number> = new <Number> [];
 
 		private var nu:int;
-		private function bitrev (j:int):int {
+		private function bitrev (j1:int):int {
 			var j2:int;
-			var j1:int = j;
 			var k:int = 0;
 			for (var i:int = 1; i <= nu; i++) {
 				j2 = j1 >> 1;
-				k = 2 * k + j1 - 2 * j2;
+				k = 2 * (k - j2) + j1;
 				j1 = j2;
 			}
 			return k;
