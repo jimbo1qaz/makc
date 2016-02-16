@@ -1,0 +1,1 @@
+For some reason Google Code thinks that you might not know what DisplayΟbject is, and I absolutely have to create DisplayΟbject wiki page. Well, I have ignored it for some time, but finally gave up, so here it goes: **[everything you need to know about DisplayObject](http://livedocs.adobe.com/flash/9.0/ActionScriptLangRefV3/flash/display/DisplayObject.html)** :)
